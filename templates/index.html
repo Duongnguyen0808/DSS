@@ -1,0 +1,564 @@
+{% extends "base.html" %} {% load static %} {% block title %}Dự Đoán Rủi Ro Tín
+Dụng{% endblock %} {% block content %}
+<div class="row">
+  <!-- LEFT COLUMN: FORM (Desktop: 8 cols, Mobile: 12 cols) -->
+  <div class="col-lg-8 col-12">
+    <form
+      method="POST"
+      action="{% url 'credit_app:predict' %}"
+      id="predictionForm"
+    >
+      {% csrf_token %}
+
+      <!-- CARD 1: THÔNG TIN CÁ NHÂN -->
+      <div class="info-card">
+        <div class="card-header-custom">
+          <div class="icon"><i class="fas fa-user"></i></div>
+          <h3>Thông Tin Cá Nhân</h3>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="age" class="form-label">
+              Tuổi <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="age"
+              name="person_age"
+              min="18"
+              max="50"
+              required
+              placeholder="Ví dụ: 30"
+              oninvalid="this.setCustomValidity('Vui lòng nhập tuổi từ 18 đến 50')"
+              oninput="this.setCustomValidity('')"
+            />
+            <div class="form-text">Độ tuổi từ 18-50</div>
+            <div class="invalid-feedback">Vui lòng nhập tuổi từ 18 đến 50</div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="income" class="form-label">
+              Thu Nhập Hàng Năm (VNĐ) <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="income"
+              name="person_income_display"
+              required
+              placeholder="100.000.000"
+            />
+            <input type="hidden" id="income_hidden" name="person_income" />
+            <div class="form-text" id="income-formatted">
+              VD: 100 triệu = 100.000.000 VNĐ
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="person_home_ownership" class="form-label">
+              Tình Trạng Sở Hữu Nhà <span class="required">*</span>
+            </label>
+            <select
+              class="form-select"
+              id="person_home_ownership"
+              name="person_home_ownership"
+              required
+            >
+              <option value="">-- Chọn --</option>
+              <option value="RENT">Thuê nhà</option>
+              <option value="MORTGAGE">Thế chấp</option>
+              <option value="OWN">Sở hữu</option>
+              <option value="OTHER">Khác</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: THÔNG TIN NGHỀ NGHIỆP & TÍN DỤNG -->
+      <div class="info-card">
+        <div class="card-header-custom">
+          <div class="icon"><i class="fas fa-briefcase"></i></div>
+          <h3>Thông Tin Nghề Nghiệp & Tín Dụng</h3>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="person_emp_length" class="form-label">
+              Thâm Niên Công Việc (năm) <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="person_emp_length"
+              name="person_emp_length"
+              min="0"
+              max="50"
+              step="0.5"
+              required
+              placeholder="Ví dụ: 5"
+              oninvalid="this.setCustomValidity('Vui lòng nhập thâm niên từ 0 đến 50 năm')"
+              oninput="this.setCustomValidity('')"
+            />
+            <div class="form-text">Số năm làm việc (0-50)</div>
+            <div class="invalid-feedback">
+              Vui lòng nhập thâm niên từ 0 đến 50 năm
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="cb_person_default_on_file" class="form-label">
+              Lịch Sử Nợ Xấu <span class="required">*</span>
+            </label>
+            <select
+              class="form-select"
+              id="cb_person_default_on_file"
+              name="cb_person_default_on_file"
+              required
+            >
+              <option value="">-- Chọn --</option>
+              <option value="Y">Có lịch sử nợ xấu</option>
+              <option value="N">Không có lịch sử nợ xấu</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="cb_person_cred_hist_length" class="form-label">
+              Lịch Sử Tín Dụng (năm) <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="cb_person_cred_hist_length"
+              name="cb_person_cred_hist_length"
+              min="0"
+              max="50"
+              step="0.5"
+              required
+              placeholder="Ví dụ: 10"
+              oninvalid="this.setCustomValidity('Vui lòng nhập lịch sử tín dụng từ 0 đến 50 năm')"
+              oninput="this.setCustomValidity('')"
+            />
+            <div class="form-text">Số năm có tín dụng (0-50)</div>
+            <div class="invalid-feedback">
+              Vui lòng nhập lịch sử tín dụng từ 0 đến 50 năm
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: THÔNG TIN KHOẢN VAY -->
+      <div class="info-card">
+        <div class="card-header-custom">
+          <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
+          <h3>Thông Tin Khoản Vay</h3>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="loan_intent" class="form-label">
+              Mục Đích Vay <span class="required">*</span>
+            </label>
+            <select
+              class="form-select"
+              id="loan_intent"
+              name="loan_intent"
+              required
+            >
+              <option value="">-- Chọn --</option>
+              <option value="EDUCATION">Giáo dục</option>
+              <option value="MEDICAL">Y tế</option>
+              <option value="VENTURE">Kinh doanh</option>
+              <option value="PERSONAL">Cá nhân</option>
+              <option value="HOMEIMPROVEMENT">Cải tạo nhà</option>
+              <option value="DEBTCONSOLIDATION">Hợp nhất nợ</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="loan_grade" class="form-label">
+              Xếp Hạng Khoản Vay <span class="required">*</span>
+            </label>
+            <select
+              class="form-select"
+              id="loan_grade"
+              name="loan_grade"
+              required
+            >
+              <option value="">-- Chọn --</option>
+              <option value="A">A - Xuất sắc</option>
+              <option value="B">B - Rất tốt</option>
+              <option value="C">C - Tốt</option>
+              <option value="D">D - Trung bình</option>
+              <option value="E">E - Kém</option>
+              <option value="F">F - Rất kém</option>
+              <option value="G">G - Xấu</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="loan_amnt" class="form-label">
+              Số Tiền Vay Mong Muốn (VNĐ) <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="loan_amnt"
+              name="loan_amnt_display"
+              required
+              placeholder="100.000.000"
+            />
+            <input type="hidden" id="loan_amnt_hidden" name="loan_amnt" />
+            <div class="form-text" id="loan-formatted">
+              VD: 100 triệu = 100.000.000 VNĐ
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="loan_int_rate" class="form-label">
+              Lãi Suất Dự Kiến (%) <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="loan_int_rate"
+              name="loan_int_rate"
+              min="0"
+              max="30"
+              step="0.01"
+              required
+              placeholder="Ví dụ: 8.5"
+              oninvalid="this.setCustomValidity('Vui lòng nhập lãi suất từ 0% đến 30%')"
+              oninput="this.setCustomValidity('')"
+            />
+            <div class="form-text">8.5% = 8.5</div>
+            <div class="invalid-feedback">
+              Vui lòng nhập lãi suất từ 0% đến 30%
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="loan_percent_income" class="form-label">
+              Tỷ Lệ Khoản Vay/Thu Nhập <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="loan_percent_income"
+              name="loan_percent_income"
+              min="0"
+              max="1"
+              step="0.01"
+              required
+              placeholder="Ví dụ: 0.3"
+              oninvalid="this.setCustomValidity('Vui lòng nhập tỷ lệ từ 0 đến 1 (VD: 0.3 = 30%)')"
+              oninput="this.setCustomValidity('')"
+            />
+            <div class="form-text">30% = 0.3</div>
+            <div class="invalid-feedback">Vui lòng nhập tỷ lệ từ 0 đến 1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBMIT BUTTON -->
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary-custom w-100">
+          <i class="fas fa-chart-line"></i> Phân Tích & Đưa Ra Quyết Định
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- RIGHT COLUMN: RESULT PANEL (Desktop: 4 cols, Mobile: 12 cols) -->
+  <div class="col-lg-4 col-12">
+    <div class="result-panel">
+      <div class="result-card">
+        <h4 class="text-center mb-3">
+          <i class="fas fa-chart-pie text-primary-custom"></i> Kết Quả Phân Tích
+        </h4>
+
+        {% if decision %}
+        <!-- Kết quả sau khi dự đoán -->
+        <div class="alert alert-{{ decision_class }} mb-3">
+          <h5 class="mb-0">
+            <i
+              class="fas fa-{% if decision_class == 'success' %}check-circle{% else %}times-circle{% endif %}"
+            ></i>
+            {{ decision }}
+          </h5>
+        </div>
+
+        <div class="result-details">
+          <div class="mb-3">
+            <strong>Xác Suất Vỡ Nợ:</strong>
+            <div class="progress mt-2" style="height: 25px">
+              <div
+                class="progress-bar bg-{% if probability > 50 %}danger{% else %}success{% endif %}"
+                style="width: {{ probability }}%"
+              >
+                {{ probability|floatformat:2 }}%
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <strong>Điểm AHP:</strong> {{ ahp_score|floatformat:2 }}
+          </div>
+
+          <div class="mb-3">
+            <strong>Mức Rủi Ro:</strong>
+            <span
+              class="badge bg-{% if risk_level == 'Thấp' %}success{% elif risk_level == 'Trung bình' %}warning{% else %}danger{% endif %}"
+            >
+              {{ risk_level }}
+            </span>
+          </div>
+
+          <div class="mb-3">
+            <strong>Hạn Mức Đề Xuất:</strong><br />
+            <span class="text-primary fs-5">{{ recommended_amount }}</span>
+          </div>
+
+          <div class="alert alert-info">
+            <small>{{ explanation }}</small>
+          </div>
+        </div>
+        {% else %}
+        <!-- Placeholder khi chưa dự đoán -->
+        <div class="text-center text-muted py-5">
+          <i class="fas fa-clipboard-list fa-3x mb-3" style="opacity: 0.3"></i>
+          <p class="mb-0">
+            Nhập thông tin và nhấn<br />"Phân Tích" để xem kết quả
+          </p>
+        </div>
+
+        <!-- Stats Preview -->
+        <div class="row g-2 mt-3">
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Xác suất</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Điểm AHP</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Hạn mức</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Format number to VND style (1.000.000)
+  function formatVND(num) {
+    if (!num || num === "") return "";
+    // Remove all non-digits
+    let number = num.toString().replace(/\D/g, "");
+    // Format with dot separator
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  // Auto-format Thu Nhập input
+  const incomeInput = document.getElementById("income");
+  const incomeHidden = document.getElementById("income_hidden");
+
+  incomeInput.addEventListener("input", function (e) {
+    // Get raw number (remove all dots)
+    let rawValue = this.value.replace(/\./g, "");
+
+    // Only allow numbers
+    rawValue = rawValue.replace(/\D/g, "");
+
+    // Update hidden field with raw number
+    incomeHidden.value = rawValue;
+
+    // Format and display
+    if (rawValue) {
+      this.value = formatVND(rawValue);
+    }
+  });
+
+  // Auto-format Số Tiền Vay input
+  const loanInput = document.getElementById("loan_amnt");
+  const loanHidden = document.getElementById("loan_amnt_hidden");
+
+  loanInput.addEventListener("input", function (e) {
+    // Get raw number (remove all dots)
+    let rawValue = this.value.replace(/\./g, "");
+
+    // Only allow numbers
+    rawValue = rawValue.replace(/\D/g, "");
+
+    // Update hidden field with raw number
+    loanHidden.value = rawValue;
+
+    // Format and display
+    if (rawValue) {
+      this.value = formatVND(rawValue);
+    }
+  });
+
+  // Real-time validation for number inputs
+  const ageInput = document.getElementById("age");
+  const empLengthInput = document.getElementById("person_emp_length");
+  const credHistInput = document.getElementById("cb_person_cred_hist_length");
+  const intRateInput = document.getElementById("loan_int_rate");
+  const loanPercentInput = document.getElementById("loan_percent_income");
+
+  // Validate age (18-50)
+  ageInput.addEventListener("blur", function () {
+    const val = parseInt(this.value);
+    if (this.value && (val < 18 || val > 50)) {
+      this.classList.add("is-invalid");
+    } else {
+      this.classList.remove("is-invalid");
+    }
+  });
+
+  // Validate employment length (0-50)
+  empLengthInput.addEventListener("blur", function () {
+    const val = parseFloat(this.value);
+    if (this.value && (val < 0 || val > 50)) {
+      this.classList.add("is-invalid");
+    } else {
+      this.classList.remove("is-invalid");
+    }
+  });
+
+  // Validate credit history (0-50)
+  credHistInput.addEventListener("blur", function () {
+    const val = parseFloat(this.value);
+    if (this.value && (val < 0 || val > 50)) {
+      this.classList.add("is-invalid");
+    } else {
+      this.classList.remove("is-invalid");
+    }
+  });
+
+  // Validate interest rate (0-30)
+  intRateInput.addEventListener("blur", function () {
+    const val = parseFloat(this.value);
+    if (this.value && (val < 0 || val > 30)) {
+      this.classList.add("is-invalid");
+    } else {
+      this.classList.remove("is-invalid");
+    }
+  });
+
+  // Validate loan percent income (0-1)
+  loanPercentInput.addEventListener("blur", function () {
+    const val = parseFloat(this.value);
+    if (this.value && (val < 0 || val > 1)) {
+      this.classList.add("is-invalid");
+    } else {
+      this.classList.remove("is-invalid");
+    }
+  });
+
+  // Form validation và UX improvements
+  document
+    .getElementById("predictionForm")
+    .addEventListener("submit", function (e) {
+      // Validate all fields before submit
+      let hasError = false;
+
+      // Validate hidden fields (income và loan amount)
+      const incomeValue = incomeHidden.value;
+      const loanValue = loanHidden.value;
+
+      if (!incomeValue || incomeValue === "" || parseInt(incomeValue) <= 0) {
+        incomeInput.classList.add("is-invalid");
+        hasError = true;
+      }
+
+      if (!loanValue || loanValue === "" || parseInt(loanValue) <= 0) {
+        loanInput.classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // Check age range
+      const age = parseInt(document.getElementById("age").value);
+      if (age < 18 || age > 50) {
+        document.getElementById("age").classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // Check employment length
+      const empLength = parseFloat(
+        document.getElementById("person_emp_length").value
+      );
+      if (empLength < 0 || empLength > 50) {
+        document
+          .getElementById("person_emp_length")
+          .classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // Check credit history
+      const credHistory = parseFloat(
+        document.getElementById("cb_person_cred_hist_length").value
+      );
+      if (credHistory < 0 || credHistory > 50) {
+        document
+          .getElementById("cb_person_cred_hist_length")
+          .classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // Check interest rate
+      const intRate = parseFloat(
+        document.getElementById("loan_int_rate").value
+      );
+      if (intRate < 0 || intRate > 30) {
+        document.getElementById("loan_int_rate").classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // Check loan percent income
+      const loanPercent = parseFloat(
+        document.getElementById("loan_percent_income").value
+      );
+      if (loanPercent < 0 || loanPercent > 1) {
+        document
+          .getElementById("loan_percent_income")
+          .classList.add("is-invalid");
+        hasError = true;
+      }
+
+      // If any validation failed, prevent submit
+      if (hasError) {
+        e.preventDefault();
+        return false;
+      }
+
+      // All validations passed - show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Đang phân tích...';
+    });
+
+  // Format number inputs
+  const numberInputs = document.querySelectorAll('input[type="number"]');
+  numberInputs.forEach((input) => {
+    input.addEventListener("focus", function () {
+      this.parentElement.classList.add("focused");
+    });
+    input.addEventListener("blur", function () {
+      this.parentElement.classList.remove("focused");
+    });
+  });
+</script>
+{% endblock %}

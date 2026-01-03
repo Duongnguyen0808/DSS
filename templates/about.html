@@ -1,0 +1,394 @@
+{% extends "base.html" %} {% block title %}Giới Thiệu Hệ Thống{% endblock %} {%
+block extra_css %}
+<style>
+  .about-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .about-header h2 {
+    color: #667eea;
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+
+  .about-header p {
+    color: #666;
+    font-size: 16px;
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section h3 {
+    color: #667eea;
+    font-size: 24px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+  }
+
+  .section p {
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .section ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .section li {
+    padding: 10px 0;
+    padding-left: 30px;
+    position: relative;
+    line-height: 1.6;
+  }
+
+  .section li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .methodology-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .methodology-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 25px;
+    border-radius: 15px;
+    border-left: 4px solid;
+    border-image: linear-gradient(180deg, #10b981, #059669) 1;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .methodology-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.05) 0%,
+      rgba(5, 150, 105, 0.05) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .methodology-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.25);
+  }
+
+  .methodology-card:hover::before {
+    opacity: 1;
+  }
+
+  .methodology-card h4 {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    font-size: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .methodology-card p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+  }
+
+  .formula-box {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.08) 0%,
+      rgba(5, 150, 105, 0.08) 100%
+    );
+    padding: 25px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-family: "Courier New", monospace;
+    border-left: 4px solid;
+    border-image: linear-gradient(180deg, #10b981, #059669) 1;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .formula-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(
+      circle,
+      rgba(16, 185, 129, 0.1) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+  }
+
+  .tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .tech-item {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tech-item::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+  }
+
+  .tech-item:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  }
+
+  .tech-item:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .criteria-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  .criteria-table th,
+  .criteria-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+  }
+
+  .criteria-table th {
+    background: #667eea;
+    color: white;
+  }
+
+  .criteria-table tr:nth-child(even) {
+    background: #f8f9fa;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="about-header">
+  <h2>🏦 Hệ Hỗ Trợ Ra Quyết Định</h2>
+  <p>Đánh Giá Rủi Ro Tín Dụng - Tích Hợp AHP & Machine Learning</p>
+</div>
+
+<div class="section">
+  <h3>📖 Giới Thiệu</h3>
+  <p>
+    Hệ thống Hỗ trợ Ra quyết định (Decision Support System - DSS) này được xây
+    dựng nhằm hỗ trợ các tổ chức tài chính trong việc đánh giá rủi ro tín dụng
+    và đưa ra quyết định cho vay khách hàng một cách khoa học và chính xác.
+  </p>
+  <p>
+    Hệ thống kết hợp
+    <strong>phương pháp AHP (Analytic Hierarchy Process)</strong> để xác định
+    trọng số các tiêu chí và <strong>Machine Learning</strong> để phân tích, dự
+    báo rủi ro, tạo nên một quy trình đánh giá toàn diện và hiệu quả.
+  </p>
+</div>
+
+<div class="section">
+  <h3>🎯 Mục Tiêu</h3>
+  <ul>
+    <li>Tự động hóa quy trình đánh giá rủi ro tín dụng</li>
+    <li>
+      Kết hợp chuyên môn của con người (AHP) với khả năng học của máy (ML)
+    </li>
+    <li>Cung cấp quyết định minh bạch, có căn cứ và nhất quán</li>
+    <li>Giảm thiểu rủi ro vỡ nợ cho tổ chức tài chính</li>
+    <li>Tối ưu hóa hạn mức vay phù hợp với khả năng của khách hàng</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>⚙️ Phương Pháp Luận</h3>
+
+  <div class="methodology-grid">
+    <div class="methodology-card">
+      <h4>1️⃣ AHP (Analytic Hierarchy Process)</h4>
+      <p>
+        Phương pháp phân tích thứ bậc được sử dụng để xác định trọng số cho 5
+        tiêu chí chính: Thu nhập, Thâm niên công việc, Lịch sử tín dụng, Tỷ lệ
+        nợ/thu nhập, và Tài sản thế chấp.
+      </p>
+      <p>
+        <strong>Ma trận so sánh cặp:</strong> Sử dụng thang đo Saaty (1-9) để so
+        sánh từng cặp tiêu chí.
+      </p>
+      <p><strong>Kiểm tra nhất quán:</strong> CR (Consistency Ratio) < 0.1</p>
+    </div>
+
+    <div class="methodology-card">
+      <h4>2️⃣ Machine Learning</h4>
+      <p>
+        Mô hình <strong>Random Forest Classifier</strong> được huấn luyện trên
+        32,581 hồ sơ khách hàng thực tế, đạt độ chính xác 83.73%.
+      </p>
+      <p><strong>Tham số:</strong> 500 cây quyết định, max_features=4</p>
+      <p><strong>Output:</strong> Xác suất vỡ nợ (0-100%)</p>
+    </div>
+
+    <div class="methodology-card">
+      <h4>3️⃣ DSS Logic</h4>
+      <p>
+        Kết hợp điểm AHP và xác suất từ ML để tính điểm cuối cùng và đưa ra
+        quyết định 3 cấp độ: Duyệt, Duyệt có điều kiện, Từ chối.
+      </p>
+      <p>
+        <strong>Công thức:</strong> Final Score = AHP Score × (1 -
+        Probability/100)
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📊 5 Tiêu Chí Đánh Giá AHP</h3>
+  <table class="criteria-table">
+    <thead>
+      <tr>
+        <th>Tiêu Chí</th>
+        <th>Mô Tả</th>
+        <th>Cách Tính Điểm</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Thu nhập (Income)</strong></td>
+        <td>Khả năng tài chính của khách hàng</td>
+        <td>Chuẩn hóa theo phân vị (0-1)</td>
+      </tr>
+      <tr>
+        <td><strong>Thâm niên công việc (Employment Length)</strong></td>
+        <td>Tính ổn định trong công việc</td>
+        <td>Điểm = emp_length / 40</td>
+      </tr>
+      <tr>
+        <td><strong>Lịch sử tín dụng (Credit History)</strong></td>
+        <td>Kinh nghiệm và uy tín trong vay vốn</td>
+        <td>1.0 nếu không nợ xấu, 0.0 nếu có nợ xấu</td>
+      </tr>
+      <tr>
+        <td><strong>Tỷ lệ nợ/thu nhập (Debt Ratio)</strong></td>
+        <td>Gánh nặng nợ hiện tại</td>
+        <td>Điểm = 1 - loan_percent_income</td>
+      </tr>
+      <tr>
+        <td><strong>Tài sản thế chấp (Collateral)</strong></td>
+        <td>Bảo đảm cho khoản vay</td>
+        <td>OWN=1.0, MORTGAGE=0.7, RENT=0.3</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>🧮 Công Thức Tính Toán</h3>
+
+  <div class="formula-box">
+    <strong>1. Điểm AHP:</strong><br />
+    AHP_Score = Σ (Weight_i × Criteria_Score_i)<br />
+    <br />
+    <strong>2. Điểm DSS Cuối Cùng:</strong><br />
+    Final_Score = AHP_Score × (1 - Probability_of_Default / 100)<br />
+    <br />
+    <strong>3. Quyết Định:</strong><br />
+    - Nếu Probability < 20%: <strong>Duyệt</strong><br />
+    - Nếu 20% ≤ Probability < 35%: <strong>Duyệt có điều kiện</strong><br />
+    - Nếu Probability ≥ 35%: <strong>Từ chối</strong><br />
+    <br />
+    <strong>4. Hạn Mức Vay Tối Đa:</strong><br />
+    Max_Loan = Income × DTI_Ratio × Risk_Factor × AHP_Factor<br />
+    Risk_Factor = (1 - Probability / 100)<br />
+    AHP_Factor = AHP_Score<br />
+    Cap: Không quá 5 × Income
+  </div>
+</div>
+
+<div class="section">
+  <h3>🛠️ Công Nghệ Sử Dụng</h3>
+  <div class="tech-stack">
+    <div class="tech-item">Python 3.12</div>
+    <div class="tech-item">Django 5.1.7</div>
+    <div class="tech-item">PostgreSQL</div>
+    <div class="tech-item">scikit-learn</div>
+    <div class="tech-item">NumPy</div>
+    <div class="tech-item">Pandas</div>
+    <div class="tech-item">HTML5/CSS3</div>
+    <div class="tech-item">Random Forest</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>📈 Hiệu Suất Hệ Thống</h3>
+  <ul>
+    <li><strong>Độ chính xác mô hình ML:</strong> 83.73%</li>
+    <li><strong>Thời gian phản hồi:</strong> < 1 giây</li>
+    <li><strong>Consistency Ratio (CR):</strong> < 0.1 (đạt chuẩn AHP)</li>
+    <li><strong>Số lượng tiêu chí AHP:</strong> 5 tiêu chí</li>
+    <li><strong>Số cây trong Random Forest:</strong> 500 cây</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3>👥 Thông Tin Dự Án</h3>
+  <p><strong>Loại dự án:</strong> Đồ án môn học - Hệ Hỗ Trợ Ra Quyết Định</p>
+  <p><strong>Trường:</strong> Đại học</p>
+  <p><strong>Năm:</strong> 2026</p>
+  <p><strong>Framework:</strong> Django + PostgreSQL + Machine Learning</p>
+</div>
+
+<div style="text-align: center; margin-top: 40px">
+  <a href="{% url 'credit_app:index' %}" class="btn">Bắt Đầu Đánh Giá</a>
+</div>
+{% endblock %}

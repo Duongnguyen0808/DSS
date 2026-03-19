@@ -11,9 +11,9 @@
   --warning-color: #f59e0b;
   --text-dark: #1f2937;
   --text-muted: #6b7280;
-  --bg-light: #f9fafb;
+  --bg-light: #ecfdf5; /* Nền xanh lá nhạt cho toàn bộ trang */
   --bg-white: #ffffff;
-  --border-color: #e5e7eb;
+  --border-color: #a7f3d0; /* Viền mờ màu xanh lá */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -66,13 +66,13 @@ body {
 }
 
 .nav-pills .nav-link:hover {
-  background-color: rgba(79, 70, 229, 0.1);
+  background-color: rgba(16, 185, 129, 0.1);
   color: var(--primary-color);
 }
 
 .nav-pills .nav-link.active {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--primary-color) !important;
+  color: white !important;
 }
 
 /* ========== CARDS ========== */

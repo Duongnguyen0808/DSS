@@ -416,8 +416,18 @@ def ahp_matrix(request):
         ahp_engine = get_ahp_engine()
         is_custom = False
     
+    weight_rows = [
+        {
+            'name': ahp_engine.criteria[i],
+            'weight': float(ahp_engine.weights[i]),
+            'percent': float(ahp_engine.weights[i]) * 100,
+        }
+        for i in range(len(ahp_engine.criteria))
+    ]
+
     context = {
         'criteria': ahp_engine.criteria,
+        'weight_rows': weight_rows,
         'pairwise_matrix': ahp_engine.pairwise_matrix.tolist(),
         'normalized_matrix': ahp_engine.normalized_matrix.tolist(),
         'column_sums': ahp_engine.column_sums.tolist(),

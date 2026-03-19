@@ -1,0 +1,375 @@
+{% extends "base.html" %} {% load custom_filters %} {% block title %}Ma Trận So Sánh Phương Án AHP{% endblock %} {% block extra_css %}
+<style>
+  .alt-header {
+    text-align: center; margin-bottom: 28px; padding: 26px 40px;
+    background: linear-gradient(135deg,#10b981 0%,#059669 100%);
+    color: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(16,185,129,.4);
+  }
+  .alt-header h2 { font-size: 27px; margin-bottom: 6px; }
+  .alt-header p  { font-size: 14px; opacity:.95; }
+
+  .sync-box {
+    background: rgba(16,185,129,.07); border:2px solid #10b981; border-radius:12px;
+    padding:12px 18px; margin-bottom:24px; font-size:14px; color:#374151;
+  }
+  .sync-box strong { color:#059669; }
+
+  /* ── Per‑criterion card ── */
+  .crit-card {
+    background:white; border-radius:15px; padding:28px;
+    margin-bottom:32px; box-shadow:0 4px 15px rgba(0,0,0,.09);
+  }
+  .crit-header {
+    display:flex; align-items:center; gap:14px; margin-bottom:20px;
+    padding-bottom:14px; border-bottom:3px solid #10b981;
+  }
+  .crit-num {
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg,#10b981,#059669);
+    color:white; font-weight:800; font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .crit-name { font-size:20px; font-weight:700; color:#059669; }
+  .crit-score {
+    background:#d1fae5; color:#065f46; border-radius:20px;
+    padding:3px 14px; font-size:13px; font-weight:700;
+  }
+
+  /* ── Sub‑step label ── */
+  .sub-step {
+    font-size:13px; font-weight:700; color:#059669;
+    border-left:3px solid #10b981; padding-left:10px;
+    margin:18px 0 10px;
+  }
+  .sub-desc { font-size:13px; color:#555; margin-bottom:10px; font-style:italic; }
+
+  /* ── Tables ── */
+  .mt { border-collapse:collapse; font-size:13px; }
+  .mt th { background:linear-gradient(135deg,#10b981,#059669); color:#fff; padding:9px 14px; text-align:center; white-space:nowrap; }
+  .mt th.lh { text-align:left; }
+  .mt td { border:1px solid #d1fae5; padding:8px 12px; text-align:center; white-space:nowrap; }
+  .mt tr:nth-child(even) td { background:#f0fdf4; }
+  .mt td.diag { background:#bbf7d0; font-weight:bold; color:#065f46; }
+  .mt td.hi   { background:#d1fae5; font-weight:bold; }
+  .mt td.lo   { background:#fee2e2; color:#991b1b; font-weight:bold; }
+  .mt td.sum  { background:#d1fae5; font-weight:800; color:#065f46; }
+  .mt td.pv   { background:#ecfdf5; font-weight:800; color:#059669; }
+  .mt td.norm-diag { background:#bbf7d0; font-weight:bold; }
+
+  /* ── CR display ── */
+  .cr-row {
+    display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;
+  }
+  .cr-pill {
+    background:#f0fdf4; border:1px solid #a7f3d0; border-radius:10px;
+    padding:8px 16px; text-align:center; min-width:100px;
+  }
+  .cr-pill .lbl { font-size:11px; color:#6b7280; margin-bottom:2px; }
+  .cr-pill .val { font-size:18px; font-weight:800; color:#059669; }
+  .cr-ok  { color:#059669 !important; }
+  .cr-bad { color:#dc2626 !important; }
+  .cr-verdict {
+    display:inline-block; padding:4px 14px; border-radius:20px;
+    font-size:13px; font-weight:700;
+  }
+
+  /* ── Section card (synthesis / result) ── */
+  .sec-card {
+    background:white; border-radius:15px; padding:28px;
+    margin-bottom:28px; box-shadow:0 4px 15px rgba(0,0,0,.09);
+    border-left:5px solid #10b981;
+  }
+  .sec-title {
+    font-size:20px; font-weight:700; color:#059669;
+    margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid #d1fae5;
+    display:flex; align-items:center; gap:10px;
+  }
+  .badge-step {
+    width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(135deg,#10b981,#059669);
+    color:white; font-weight:800; font-size:15px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+
+  /* ── Synthesis table ── */
+  .st { border-collapse:collapse; width:100%; font-size:14px; }
+  .st th { background:linear-gradient(135deg,#10b981,#059669); color:#fff; padding:11px 14px; text-align:center; }
+  .st td { border:1px solid #d1fae5; padding:10px 14px; text-align:center; }
+  .st tr:nth-child(even) td { background:#f0fdf4; }
+  .st tr.tot td { background:#d1fae5; font-weight:800; font-size:15px; }
+
+  /* ── Result cards ── */
+  .result-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; margin:18px 0; }
+  .res-card { border-radius:14px; padding:24px; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,.12); }
+  .res-approve { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
+  .res-cond    { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+  .res-reject  { background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; }
+  .res-rank  { font-size:13px; opacity:.9; margin-bottom:6px; }
+  .res-score { font-size:32px; font-weight:800; }
+  .res-name  { font-size:13px; opacity:.9; margin-top:4px; }
+  .winner-badge { background:rgba(255,255,255,.25); border-radius:10px; padding:2px 10px; font-size:11px; margin-top:8px; display:inline-block; }
+
+  .note { background:#f0fdf4; border-left:4px solid #10b981; padding:11px 15px; border-radius:6px; font-size:14px; margin:12px 0; }
+  .formula { background:#f8fdf8; border:1px solid #a7f3d0; border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; margin:10px 0; }
+
+  .thr-table { border-collapse:collapse; font-size:13px; }
+  .thr-table th { background:#10b981; color:#fff; padding:8px 14px; }
+  .thr-table td { border:1px solid #d1fae5; padding:8px 12px; text-align:center; }
+  .thr-table tr:nth-child(even) td { background:#f0fdf4; }
+</style>
+{% endblock %} {% block content %}
+
+<div class="alt-header">
+  <h2>AHP Tầng 3 — Ma Trận So Sánh Phương Án</h2>
+  <p>Với mỗi tiêu chí, so sánh cặp 3 phương án: <strong>Duyệt / Duyệt có điều kiện / Từ chối</strong></p>
+</div>
+
+<div class="sync-box">
+  <strong>Tự động đồng bộ:</strong>
+  Trang này dùng trọng số từ
+  <a href="{% url 'credit_app:ahp_matrix' %}" style="color:#059669;font-weight:700;">Ma Trận Tiêu Chí (Tầng 2)</a>.
+  Trọng số hiện tại:
+  {% for cw in criteria_weights %}
+    <strong>{{ cw.name }}</strong> = {{ cw.weight|multiply:100|floatformat:1 }}%{% if not forloop.last %}; {% endif %}
+  {% endfor %}
+</div>
+
+<!-- ═══ Giới thiệu + bảng ngưỡng ═══ -->
+<div class="sec-card" style="border-left-color:#6ee7b7;">
+  <div class="sec-title" style="border-bottom-color:#e5e7eb;">Phương Pháp &amp; Thang Đánh Giá</div>
+  <p style="font-size:14px;color:#374151;line-height:1.8;margin-bottom:12px;">
+    Với bài toán <strong>Đánh giá rủi ro tín dụng</strong>, 3 phương án lựa chọn là:
+    <strong style="color:#059669;">Duyệt</strong>,
+    <strong style="color:#d97706;">Duyệt có điều kiện</strong>,
+    <strong style="color:#dc2626;">Từ chối</strong>.<br>
+    Với mỗi tiêu chí, xây ma trận so sánh cặp 3×3 dựa trên <strong>điểm tiêu chí của khách hàng</strong>
+    (0–100). Điểm cao → tiêu chí ủng hộ <em>Duyệt</em>; điểm thấp → ủng hộ <em>Từ chối</em>.
+  </p>
+  <table class="thr-table">
+    <thead><tr><th>Điểm tiêu chí</th><th>Ưu tiên phương án</th><th>Tỷ lệ D : DC : TC</th></tr></thead>
+    <tbody>
+      <tr><td>≥ 75</td><td>Duyệt rất mạnh</td><td>8 : 2.67 : 1</td></tr>
+      <tr><td>60 – 74</td><td>Duyệt mạnh</td><td>5 : 2 : 1</td></tr>
+      <tr><td>45 – 59</td><td>Duyệt có điều kiện</td><td>1 : 2 : 0.5</td></tr>
+      <tr><td>30 – 44</td><td>Từ chối</td><td>0.2 : 0.5 : 1</td></tr>
+      <tr><td>&lt; 30</td><td>Từ chối rất mạnh</td><td>0.125 : 0.33 : 1</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ Từng tiêu chí — đầy đủ các bước ═══ -->
+{% for mat in alt_result.alternative_matrices %}
+{% with cd=alt_result.consistency_data|index:forloop.counter0 normed=alt_result.normalized_matrices|index:forloop.counter0 pv=alt_result.priority_vectors|index:forloop.counter0 col_s=alt_result.col_sums_list|index:forloop.counter0 %}
+
+<div class="crit-card">
+  <!-- Header tiêu chí -->
+  <div class="crit-header">
+    <div class="crit-num">{{ forloop.counter }}</div>
+    <div class="crit-name">{{ cd.criterion }}</div>
+    <div class="crit-score">Điểm: {{ cd.score }} / 100</div>
+    <div style="margin-left:auto;font-size:13px;color:#6b7280;">
+      Trọng số tiêu chí: <strong style="color:#059669;">{{ alt_result.weights|index:forloop.counter0|multiply:100|floatformat:1 }}%</strong>
+    </div>
+  </div>
+
+  <!-- SUB-BƯỚC A: Ma trận so sánh cặp -->
+  <div class="sub-step">A. Ma trận so sánh cặp (Pairwise Comparison Matrix)</div>
+  <div class="sub-desc">Giá trị a<sub>ij</sub> = mức ưu tiên phương án i so với phương án j. Đường chéo = 1.</div>
+  <div style="overflow-x:auto;">
+    <table class="mt">
+      <thead>
+        <tr>
+          <th class="lh" style="min-width:130px;">Phương án</th>
+          {% for alt in alt_result.alternatives %}<th>{{ alt }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in mat %}
+        <tr>
+          <th class="lh" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:600;">
+            {{ alt_result.alternatives|index:forloop.counter0 }}
+          </th>
+          {% for val in row %}
+          <td class="{% if forloop.counter0 == forloop.parentloop.counter0 %}diag{% elif val >= 3 %}hi{% elif val < 0.5 %}lo{% endif %}">
+            {{ val|floatformat:3 }}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+        <!-- Hàng tổng cột -->
+        <tr>
+          <th class="lh" style="background:#047857;color:#fff;font-style:italic;">Tổng cột (Sum)</th>
+          {% for s in col_s %}<td class="sum">{{ s|floatformat:4 }}</td>{% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SUB-BƯỚC B: Chuẩn hóa + Priority Vector -->
+  <div class="sub-step">B. Chuẩn hóa ma trận &amp; Tính Priority Vector</div>
+  <div class="sub-desc">
+    Chia mỗi ô cho tổng cột tương ứng → ma trận chuẩn hóa.
+    Priority Vector = trung bình mỗi hàng (trọng số phương án theo tiêu chí này).
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="mt">
+      <thead>
+        <tr>
+          <th class="lh" style="min-width:130px;">Phương án</th>
+          {% for alt in alt_result.alternatives %}<th>{{ alt }}</th>{% endfor %}
+          <th style="background:#047857;">Priority Vector (w)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in normed %}
+        <tr>
+          <th class="lh" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:600;">
+            {{ alt_result.alternatives|index:forloop.counter0 }}
+          </th>
+          {% for val in row %}
+          <td class="{% if forloop.counter0 == forloop.parentloop.counter0 %}norm-diag{% endif %}">
+            {{ val|floatformat:4 }}
+          </td>
+          {% endfor %}
+          <td class="pv">{{ pv|index:forloop.counter0|floatformat:4 }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <th class="lh" style="background:#047857;color:#fff;font-style:italic;">Tổng cột</th>
+          {% for s in col_s %}<td class="sum">{{ s|floatformat:4 }}</td>{% endfor %}
+          <td class="sum" style="color:#059669;">1.0000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note" style="margin-top:8px;font-size:13px;">
+    Priority Vector: &nbsp;
+    <strong style="color:#059669;">Duyệt = {{ pv|index:0|floatformat:4 }}</strong> &nbsp;|&nbsp;
+    <strong style="color:#d97706;">Duyệt có ĐK = {{ pv|index:1|floatformat:4 }}</strong> &nbsp;|&nbsp;
+    <strong style="color:#dc2626;">Từ chối = {{ pv|index:2|floatformat:4 }}</strong>
+  </div>
+
+  <!-- SUB-BƯỚC C: Kiểm tra CR -->
+  <div class="sub-step">C. Kiểm Tra Tính Nhất Quán (Consistency Check)</div>
+  <div class="sub-desc">
+    λ<sub>max</sub> = trung bình (tích ma trận × priority vector / priority vector) &nbsp;|&nbsp;
+    CI = (λ<sub>max</sub> − n)/(n−1) &nbsp;|&nbsp;
+    CR = CI / RI &nbsp;|&nbsp; RI(n=3) = 0.58
+  </div>
+  <div class="cr-row">
+    <div class="cr-pill">
+      <div class="lbl">λ<sub>max</sub></div>
+      <div class="val">{{ cd.lambda_max }}</div>
+    </div>
+    <div class="cr-pill">
+      <div class="lbl">CI</div>
+      <div class="val">{{ cd.ci }}</div>
+    </div>
+    <div class="cr-pill">
+      <div class="lbl">RI (n=3)</div>
+      <div class="val">0.58</div>
+    </div>
+    <div class="cr-pill">
+      <div class="lbl">CR = CI/RI</div>
+      <div class="val {% if cd.is_consistent %}cr-ok{% else %}cr-bad{% endif %}">{{ cd.cr }}</div>
+    </div>
+    <div class="cr-pill" style="border:2px solid {% if cd.is_consistent %}#10b981{% else %}#dc2626{% endif %};">
+      <div class="lbl">Kết quả</div>
+      <div class="val {% if cd.is_consistent %}cr-ok{% else %}cr-bad{% endif %}">
+        {% if cd.is_consistent %}✓ Nhất quán{% else %}✗ Không nhất quán{% endif %}
+      </div>
+    </div>
+  </div>
+
+</div><!-- end crit-card -->
+{% endwith %}
+{% endfor %}
+
+<!-- ═══ Tổng hợp điểm phương án ═══ -->
+<div class="sec-card">
+  <div class="sec-title">
+    <div class="badge-step">∑</div>
+    Tổng Hợp Điểm Phương Án (Synthesis)
+  </div>
+  <p style="font-size:14px;color:#374151;margin-bottom:12px;">
+    Điểm tổng hợp = tổng (trọng số tiêu chí × priority vector theo tiêu chí đó), nhân ma trận trọng số (5×1) với ma trận priority (5×3).
+  </p>
+  <div class="formula">
+    Điểm(Phương án j) = Σ<sub>k=1..5</sub> [ w<sub>k</sub> × p<sub>kj</sub> ]<br>
+    w<sub>k</sub>: trọng số tiêu chí k (từ Ma Trận Tầng 2, tự đồng bộ)
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="st">
+      <thead>
+        <tr>
+          <th style="text-align:left;min-width:160px;">Tiêu chí (k)</th>
+          <th>Trọng số w<sub>k</sub></th>
+          <th style="color:#bbf7d0;">Duyệt</th>
+          <th style="color:#fde68a;">Duyệt có ĐK</th>
+          <th style="color:#fca5a5;">Từ chối</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cd in alt_result.consistency_data %}
+        {% with pv=alt_result.priority_vectors|index:forloop.counter0 wk=alt_result.weights|index:forloop.counter0 %}
+        <tr>
+          <td style="text-align:left;font-weight:600;">
+            {{ forloop.counter }}. {{ cd.criterion }}
+            <span style="color:#9ca3af;font-size:12px;">({{ cd.score }}đ)</span>
+          </td>
+          <td style="color:#059669;font-weight:700;">{{ wk|floatformat:4 }}</td>
+          <td style="color:#059669;font-weight:600;">{{ pv|index:0|floatformat:4 }}</td>
+          <td style="color:#d97706;font-weight:600;">{{ pv|index:1|floatformat:4 }}</td>
+          <td style="color:#dc2626;font-weight:600;">{{ pv|index:2|floatformat:4 }}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        <tr class="tot">
+          <td style="text-align:left;">ĐIỂM TỔNG HỢP &nbsp; Σ w<sub>k</sub> × p<sub>kj</sub></td>
+          <td>1.0000</td>
+          <td style="color:#059669;font-size:16px;">{{ alt_result.final_scores_list|index:0|floatformat:4 }}</td>
+          <td style="color:#d97706;font-size:16px;">{{ alt_result.final_scores_list|index:1|floatformat:4 }}</td>
+          <td style="color:#dc2626;font-size:16px;">{{ alt_result.final_scores_list|index:2|floatformat:4 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ Kết quả xếp hạng ═══ -->
+<div class="sec-card">
+  <div class="sec-title">
+    <div class="badge-step">★</div>
+    Kết Quả — Xếp Hạng Phương Án
+  </div>
+  <div class="result-cards">
+    {% for r in alt_result.ranking %}
+    <div class="res-card {% if forloop.counter == 1 %}res-approve{% elif forloop.counter == 2 %}res-cond{% else %}res-reject{% endif %}">
+      <div class="res-rank">Hạng {{ forloop.counter }}</div>
+      <div class="res-score">{{ r.score|floatformat:4 }}</div>
+      <div class="res-name">{{ r.alternative }}</div>
+      {% if forloop.first %}<div class="winner-badge">Khuyến nghị</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="note">
+    <strong>Kết luận:</strong>
+    Phương án được AHP Tầng 3 khuyến nghị là
+    <strong style="color:#059669;font-size:15px;">{{ alt_result.best_alternative }}</strong>
+    với điểm tổng hợp cao nhất <strong>{{ alt_result.ranking.0.score }}</strong>.
+    Kết quả phản ánh đồng thời trọng số tiêu chí (Tầng 2) và mức ủng hộ của từng tiêu chí đối với từng phương án (Tầng 3).
+  </div>
+</div>
+
+<!-- Nút điều hướng -->
+<div style="text-align:center;margin-top:8px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+  <a href="{% url 'credit_app:ahp_matrix' %}"
+     style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,.35);">
+    Ma Trận Tiêu Chí (Tầng 2)
+  </a>
+  <a href="{% url 'credit_app:index' %}"
+     style="background:linear-gradient(135deg,#059669,#047857);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;box-shadow:0 4px 12px rgba(5,150,105,.35);">
+    Thực Hiện Đánh Giá
+  </a>
+</div>
+{% endblock %}

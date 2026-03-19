@@ -285,18 +285,25 @@
         </td>
         <td>
           {% if pred.decision == "DUYỆT" %}
-          <span class="decision-badge badge-approved"
-            ><i class="fas fa-check-circle"></i> {{ pred.decision }}</span
-          >
+          <span class="decision-badge badge-approved">
+            <i class="fas fa-check-circle"></i> {{ pred.decision }}
+          </span>
           {% elif pred.decision == "DUYỆT CÓ ĐIỀU KIỆN" %}
-          <span class="decision-badge badge-conditional"
-            ><i class="fas fa-exclamation-triangle"></i> {{ pred.decision
-            }}</span
-          >
+          <span class="decision-badge badge-conditional">
+            <i class="fas fa-exclamation-triangle"></i> {{ pred.decision }}
+          </span>
+          <div style="font-size: 11px; color: #d97706; margin-top: 4px; line-height: 1.3;">
+            {% if "Thế chấp" in pred.explanation %}
+              • Yêu cầu: Thế chấp tài sản{% if "bảo lãnh" in pred.explanation %}/Người bảo lãnh{% endif %}
+            {% endif %}
+            {% if "kiểm tra định kỳ" in pred.explanation %}
+              <br>• Kiểm tra định kỳ
+            {% endif %}
+          </div>
           {% else %}
-          <span class="decision-badge badge-rejected"
-            ><i class="fas fa-times-circle"></i> {{ pred.decision }}</span
-          >
+          <span class="decision-badge badge-rejected">
+            <i class="fas fa-times-circle"></i> {{ pred.decision }}
+          </span>
           {% endif %}
         </td>
         <td>{{ pred.recommended_amount|format_number }}</td>

@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}Giới Thiệu Hệ Thống{% endblock %} {%
-block extra_css %}
+{% extends "base.html" %} {% block title %}Giới Thiệu Hệ Thống{% endblock %} {% block extra_css %}
 <style>
   .about-header {
     text-align: center;
@@ -181,7 +180,9 @@ block extra_css %}
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
+    transition:
+      width 0.5s,
+      height 0.5s;
   }
 
   .tech-item:hover {

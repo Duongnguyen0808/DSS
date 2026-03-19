@@ -24,3 +24,27 @@ def format_number(value):
         return "{:,.0f}".format(value).replace(',', '.')
     except (ValueError, TypeError):
         return value
+
+
+@register.filter
+def index(lst, i):
+    """
+    Get item from list by index
+    Usage: {{ mylist|index:0 }}
+    """
+    try:
+        return lst[int(i)]
+    except (IndexError, ValueError, TypeError):
+        return None
+
+
+@register.filter
+def multiply(value, arg):
+    """
+    Multiply value by argument
+    Usage: {{ value|multiply:100 }}
+    """
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return value

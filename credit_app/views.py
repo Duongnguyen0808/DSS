@@ -71,7 +71,20 @@ def get_or_load_model():
 
 def index(request):
     """Trang chủ - Form nhập dữ liệu"""
-    return render(request, 'index.html')
+    # Lấy thông tin AHP weights hiện tại để hiển thị
+    custom_matrix = request.session.get('custom_ahp_matrix')
+    if custom_matrix:
+        ahp_engine = get_ahp_engine(custom_matrix=custom_matrix)
+    else:
+        ahp_engine = get_ahp_engine()
+    
+    context = {
+        'ahp_weights': ahp_engine.weights,
+        'ahp_criteria': ahp_engine.criteria,
+        'is_custom_matrix': ahp_engine.is_custom,
+    }
+    
+    return render(request, 'index.html', context)
 
 
 def predict(request):
@@ -116,6 +129,12 @@ def predict(request):
         
         # 3. Tính điểm AHP
         ahp_engine = get_ahp_engine()
+        
+        # Kiểm tra xem có ma trận tùy chỉnh trong session không
+        custom_matrix = request.session.get('custom_ahp_matrix')
+        if custom_matrix:
+            ahp_engine = get_ahp_engine(custom_matrix=custom_matrix)
+        
         ahp_result = ahp_engine.calculate_score({
             'income': person_income,
             'employment_length': person_emp_length,
@@ -269,10 +288,10 @@ def predict(request):
             explanation=dss_result['explanation']
         )
         
-        # 7. Hiển thị kết quả
         context = {
             'prediction_id': prediction.id,
-            
+            'requested_amount': int(loan_amnt),
+
             # Input data
             'input_data': {
                 'Tuổi': person_age,
@@ -286,19 +305,41 @@ def predict(request):
                 'Từng vỡ nợ': cb_person_default_on_file,
                 'Lịch sử TD': f"{cb_person_cred_hist_length} năm",
             },
-            
-            # AHP results
+
+            # Nested result dict khớp với result.html
+            'result': {
+                'decision': {
+                    'decision': dss_result['decision'],
+                    'risk_level': dss_result['risk_level'],
+                    'final_score': dss_result['final_score'],
+                    'max_loan_amount': dss_result['max_loan_amount'],
+                    'recommended_amount': dss_result['recommended_amount'],
+                    'explanation': dss_result['explanation'],
+                    'decision_class': dss_result['decision_class'],
+                },
+                'ahp': {
+                    'ahp_score': ahp_result['ahp_score'],
+                    'weights': ahp_result['weights'],
+                    'criteria_scores': ahp_result['criteria_scores'],
+                    'consistency_ratio': ahp_result['consistency_ratio'],
+                    'ahp_details': ahp_result['ahp_details'],
+                },
+                'prediction': {
+                    'probability': probability_default * 100,
+                    'prediction': 'Rủi ro cao' if probability_default >= 0.5 else 'Rủi ro thấp',
+                    'model_accuracy': model_data['metadata'].get('accuracy', 0.93) * 100 if isinstance(model_data['metadata'], dict) else 93.0,
+                },
+            },
+
+            # Flat vars (dùng bởi một số chỗ trong template cũ)
             'ahp_score': ahp_result['ahp_score'],
             'ahp_weights': ahp_result['weights'],
             'criteria_scores': ahp_result['criteria_scores'],
             'consistency_ratio': ahp_result['consistency_ratio'],
             'is_consistent': ahp_result['consistency_ratio'] < 0.1,
-            
-            # AI results
+            'ahp_details': ahp_result['ahp_details'],
             'probability': probability_default * 100,
             'model_accuracy': model_data['metadata'].get('accuracy', 0.93) * 100 if isinstance(model_data['metadata'], dict) else 93.0,
-            
-            # DSS results
             'final_score': dss_result['final_score'],
             'decision': dss_result['decision'],
             'decision_class': dss_result['decision_class'],
@@ -306,10 +347,11 @@ def predict(request):
             'recommended_amount': f"{dss_result['recommended_amount']:,}đ",
             'max_loan_amount': f"{dss_result['max_loan_amount']:,}đ",
             'explanation': dss_result['explanation'],
+            'alternative_result': ahp_result.get('alternative_result', {}),
         }
-        
-        # Render kết quả trong trang index.html thay vì result.html
-        return render(request, 'index.html', context)
+
+        return render(request, 'result.html', context)
+
         
     except Exception as e:
         import traceback
@@ -359,3 +401,91 @@ def about(request):
     }
     
     return render(request, 'about.html', context)
+
+
+def ahp_matrix(request):
+    """Trang hiển thị chi tiết ma trận AHP"""
+    # Lấy ma trận từ session hoặc dùng mặc định
+    custom_matrix = request.session.get('custom_ahp_matrix')
+    if custom_matrix:
+        ahp_engine = get_ahp_engine(custom_matrix=custom_matrix)
+        is_custom = True
+    else:
+        ahp_engine = get_ahp_engine()
+        is_custom = False
+    
+    context = {
+        'criteria': ahp_engine.criteria,
+        'pairwise_matrix': ahp_engine.pairwise_matrix.tolist(),
+        'normalized_matrix': ahp_engine.normalized_matrix.tolist(),
+        'column_sums': ahp_engine.column_sums.tolist(),
+        'weights': ahp_engine.weights.tolist(),
+        'weighted_sum': ahp_engine.weighted_sum.tolist(),
+        'consistency_vector': ahp_engine.consistency_vector.tolist(),
+        'lambda_max': round(float(ahp_engine.lambda_max), 4),
+        'ci': round(float(ahp_engine.ci), 4),
+        'ri': float(ahp_engine.ri),
+        'cr': round(float(ahp_engine.cr), 4),
+        'is_consistent': ahp_engine.cr < 0.1,
+        'is_custom': is_custom,
+    }
+    
+    return render(request, 'ahp_matrix.html', context)
+
+
+def save_custom_matrix(request):
+    """Lưu ma trận tùy chỉnh vào session"""
+    if request.method == 'POST':
+        try:
+            # Parse ma trận từ form
+            matrix = []
+            for i in range(5):
+                row = []
+                for j in range(5):
+                    value = float(request.POST.get(f'cell_{i}_{j}', 1))
+                    row.append(value)
+                matrix.append(row)
+            
+            # Lưu vào session
+            request.session['custom_ahp_matrix'] = matrix
+            messages.success(request, 'Đã lưu ma trận tùy chỉnh! Bây giờ bạn có thể thực hiện dự đoán với ma trận này.')
+            
+        except Exception as e:
+            messages.error(request, f'Lỗi khi lưu ma trận: {str(e)}')
+    
+    return redirect('credit_app:ahp_matrix')
+
+
+def reset_matrix(request):
+    """Reset về ma trận mặc định"""
+    if 'custom_ahp_matrix' in request.session:
+        del request.session['custom_ahp_matrix']
+        messages.success(request, 'Đã reset về ma trận mặc định!')
+    return redirect('credit_app:ahp_matrix')
+
+
+def ahp_alternatives(request):
+    """Trang hiển thị ma trận so sánh phương án AHP (Tầng 3)"""
+    custom_matrix = request.session.get('custom_ahp_matrix')
+    ahp_engine = get_ahp_engine(custom_matrix=custom_matrix) if custom_matrix else get_ahp_engine()
+
+    # Dùng điểm mẫu để demo (có thể override bằng query params)
+    sample_scores = {
+        'Thu nhập':         int(request.GET.get('income_s', 75)),
+        'Nghề nghiệp':      int(request.GET.get('emp_s', 55)),
+        'Lịch sử tín dụng': int(request.GET.get('credit_s', 70)),
+        'Dư nợ/Thu nhập':   int(request.GET.get('debt_s', 60)),
+        'Tài sản đảm bảo':  int(request.GET.get('coll_s', 40)),
+    }
+
+    alt_result = ahp_engine.calculate_alternative_matrices(sample_scores)
+
+    context = {
+        'alt_result': alt_result,
+        'sample_scores': sample_scores,
+        'criteria_weights': [
+            {'name': ahp_engine.criteria[i], 'weight': round(float(ahp_engine.weights[i]), 4)}
+            for i in range(len(ahp_engine.criteria))
+        ],
+    }
+    return render(request, 'ahp_alternatives.html', context)

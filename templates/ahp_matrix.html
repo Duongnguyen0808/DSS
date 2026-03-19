@@ -1,0 +1,1593 @@
+{% extends "base.html" %} {% load custom_filters %} {% block title %}Ma Trận
+AHP{% endblock %} {% block extra_css %}
+<style>
+  .ahp-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+  }
+
+  .ahp-header h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .ahp-header p {
+    font-size: 16px;
+    opacity: 0.95;
+  }
+
+  .section-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+  }
+
+  .section-card h3 {
+    color: #10b981;
+    font-size: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #10b981;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-card h3 i {
+    font-size: 28px;
+  }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  .matrix-table table {
+    width: 100%;
+    min-width: 600px;
+  }
+
+  .matrix-table th,
+  .matrix-table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+
+  .matrix-table th {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .matrix-table th.criteria-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .matrix-table tr:nth-child(even) {
+    background: #f8f9fa;
+  }
+
+  .matrix-table tr:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.1) 0%,
+      rgba(5, 150, 105, 0.1) 100%
+    );
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+  }
+
+  .matrix-table td.highlight {
+    background: #fff3cd;
+    font-weight: bold;
+  }
+
+  .weight-bar {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    height: 30px;
+    border-radius: 5px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    margin: 5px 0;
+  }
+
+  .weight-container {
+    margin: 15px 0;
+  }
+
+  .weight-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+  }
+
+  .consistency-box {
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .consistency-pass {
+    background: #d4edda;
+    color: #155724;
+    border: 3px solid #28a745;
+  }
+
+  .consistency-fail {
+    background: #f8d7da;
+    color: #721c24;
+    border: 3px solid #dc3545;
+  }
+
+  .formula-box {
+    background: #f8f9fa;
+    border-left: 4px solid #10b981;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+  }
+
+  .step-number {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .info-item {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  }
+
+  .info-item .label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 5px;
+  }
+
+  .info-item .value {
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .saaty-scale {
+    background: white;
+    border: 2px solid #10b981;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .saaty-scale table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .saaty-scale th,
+  .saaty-scale td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .saaty-scale th {
+    background: #10b981;
+    color: white;
+    text-align: center;
+  }
+
+  .note-box {
+    background: #e7f3ff;
+    border-left: 4px solid #2196f3;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+  }
+
+  .note-box strong {
+    color: #1976d2;
+  }
+
+  .custom-indicator {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 15px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+  }
+
+  .edit-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #10b981;
+  }
+
+  .edit-section h3 {
+    color: #10b981;
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .matrix-input-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+
+  .matrix-input-table th,
+  .matrix-input-table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+
+  .matrix-input-table th {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .matrix-input-table input {
+    width: 70px;
+    padding: 6px;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: monospace;
+  }
+
+  .matrix-input-table input:focus {
+    border-color: #10b981;
+    outline: none;
+  }
+
+  .matrix-input-table input:disabled {
+    background: #f0f0f0;
+    color: #999;
+  }
+
+  .form-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .btn-save {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+  }
+
+  .btn-reset {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .btn-reset:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
+  }
+
+  .instruction-box {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  .preset-templates {
+    background: #fff7ed;
+    border: 2px solid #fb923c;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .preset-templates h4 {
+    color: #ea580c;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+  }
+
+  .preset-btn {
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
+  }
+
+  .preset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(251, 146, 60, 0.5);
+  }
+
+  .preset-btn:active {
+    transform: translateY(0);
+  }
+
+  .preset-btn small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.9;
+    margin-top: 3px;
+  }
+
+  .auto-reset-notice {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-size: 13px;
+    color: #92400e;
+  }
+
+  .sticky-summary {
+    position: sticky;
+    top: 20px;
+    background: white;
+    border: 3px solid #10b981;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    z-index: 100;
+  }
+
+  .sticky-summary h4 {
+    color: #10b981;
+    font-size: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .summary-weights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .summary-weight-item {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .summary-weight-item .label {
+    font-size: 11px;
+    opacity: 0.9;
+  }
+
+  .summary-weight-item .value {
+    font-size: 18px;
+    margin-top: 3px;
+  }
+
+  .layout-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+
+  @media (max-width: 1200px) {
+    .layout-2col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="ahp-header">
+  <h2>
+    <i class="fas fa-calculator"></i> Ma Trận AHP - Analytic Hierarchy Process
+    {% if is_custom %}
+    <span class="custom-indicator"
+      ><i class="fas fa-edit"></i> Đang dùng ma trận tùy chỉnh</span
+    >
+    {% endif %}
+  </h2>
+  <p>Chi tiết tính toán trọng số tiêu chí đánh giá rủi ro tín dụng</p>
+</div>
+
+<!-- Tóm tắt trọng số hiện tại (Sticky) -->
+<div class="sticky-summary">
+  <h4><i class="fas fa-star"></i> Trọng Số Hiện Tại</h4>
+  <div class="summary-weights">
+    {% for criterion in criteria %}
+    <div class="summary-weight-item">
+      <div class="label">{{ forloop.counter }}. {{ criterion }}</div>
+      <div class="value">
+        {{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div
+    style="
+      text-align: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid rgba(255, 255, 255, 0.3);
+      color: #059669;
+      font-weight: bold;
+    "
+  >
+    <i class="fas fa-check-circle"></i> CR = {{ cr|floatformat:4 }} {% if is_consistent %}
+    <span style="color: #059669">(Nhất quán ✓)</span>
+    {% else %}
+    <span style="color: #dc2626">(Không nhất quán ✗)</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Form chỉnh sửa ma trận -->
+<div class="edit-section">
+  <h3><i class="fas fa-pencil-alt"></i> Chỉnh Sửa Ma Trận So Sánh</h3>
+
+  <div class="instruction-box">
+    <strong><i class="fas fa-info-circle"></i> Hướng dẫn:</strong>
+    <ul style="margin: 10px 0; padding-left: 20px">
+      <li>
+        Nhập giá trị từ 1-9 theo thang Saaty (xem bảng phía dưới), có thể nhập
+        cả phân số (vd: 1/2, 1/3)
+      </li>
+      <li>Khi nhập một ô, ô đối xứng sẽ tự động điền giá trị nghịch đảo</li>
+      <li>Đường chéo luôn là 1 (tiêu chí so sánh với chính nó)</li>
+      <li>Kết quả tính toán hiển thị real-time, chỉ lưu được khi CR < 0.1</li>
+      <li>
+        Sau khi lưu, ma trận tùy chỉnh sẽ được áp dụng cho các dự đoán sau này
+      </li>
+      <li>Nhấn "Khôi phục mặc định" để quay về ma trận gốc</li>
+    </ul>
+  </div>
+
+  <!-- Mẫu Ma Trận Gợi Ý -->
+  <div class="preset-templates">
+    <h4><i class="fas fa-magic"></i> Mẫu Ma Trận Gợi Ý (Chọn Nhanh)</h4>
+    <div class="preset-buttons">
+      <button type="button" class="preset-btn" onclick="loadPreset('default')">
+        <i class="fas fa-star"></i> Ma Trận Mặc Định
+        <small>Cân bằng tất cả tiêu chí</small>
+      </button>
+      <button
+        type="button"
+        class="preset-btn"
+        onclick="loadPreset('credit_history')"
+      >
+        <i class="fas fa-history"></i> Ưu Tiên Lịch Sử Tín Dụng
+        <small>Lịch sử TD quan trọng nhất</small>
+      </button>
+      <button type="button" class="preset-btn" onclick="loadPreset('income')">
+        <i class="fas fa-dollar-sign"></i> Ưu Tiên Thu Nhập
+        <small>Thu nhập là yếu tố chính</small>
+      </button>
+      <button
+        type="button"
+        class="preset-btn"
+        onclick="loadPreset('employment')"
+      >
+        <i class="fas fa-briefcase"></i> Ưu Tiên Nghề Nghiệp
+        <small>Thâm niên công việc cao</small>
+      </button>
+      <button
+        type="button"
+        class="preset-btn"
+        onclick="loadPreset('conservative')"
+      >
+        <i class="fas fa-shield-alt"></i> Bảo Thủ
+        <small>Tài sản đảm bảo quan trọng</small>
+      </button>
+      <button type="button" class="preset-btn" onclick="loadPreset('balanced')">
+        <i class="fas fa-balance-scale"></i> Cân Bằng
+        <small>Thu nhập và lịch sử ngang nhau</small>
+      </button>
+    </div>
+  </div>
+
+  <form method="POST" action="{% url 'credit_app:save_custom_matrix' %}">
+    {% csrf_token %}
+    <div style="overflow-x: auto">
+      <table class="matrix-input-table">
+        <thead>
+          <tr>
+            <th>Tiêu chí</th>
+            {% for criterion in criteria %}
+            <th>{{ criterion }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in pairwise_matrix %}
+          <tr>
+            <th>{{ criteria|index:forloop.counter0 }}</th>
+            {% for value in i %}
+            <td>
+              {% if forloop.counter0 == forloop.parentloop.counter0 %}
+              <input
+                type="text"
+                name="cell_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                value="1"
+                disabled
+                style="background: #e0e0e0"
+              />
+              {% else %}
+              <input
+                type="text"
+                name="cell_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                value="{{ value|floatformat:2 }}"
+                required
+                placeholder="1-9 hoặc 1/2"
+              />
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-buttons">
+      <button type="submit" class="btn-save">
+        <i class="fas fa-save"></i> Lưu Ma Trận
+      </button>
+      <a
+        href="{% url 'credit_app:reset_matrix' %}"
+        class="btn-reset"
+        onclick="
+          return confirm('Bạn có chắc muốn khôi phục ma trận mặc định?');
+        "
+      >
+        <i class="fas fa-undo"></i> Khôi Phục Mặc Định
+      </a>
+    </div>
+    <div id="validation-message" style="margin-top: 16px"></div>
+    <div id="consistency-display" style="margin-top: 10px"></div>
+  </form>
+</div>
+
+<!-- Thang đo Saaty -->
+<div class="section-card">
+  <h3><i class="fas fa-ruler"></i> Thang Đo Saaty (1-9)</h3>
+  <div class="saaty-scale">
+    <table>
+      <thead>
+        <tr>
+          <th>Giá trị</th>
+          <th>Ý nghĩa</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1</strong></td>
+          <td>Hai tiêu chí có tầm quan trọng như nhau</td>
+        </tr>
+        <tr>
+          <td><strong>3</strong></td>
+          <td>Tiêu chí này quan trọng hơn một chút so với tiêu chí kia</td>
+        </tr>
+        <tr>
+          <td><strong>5</strong></td>
+          <td>Tiêu chí này quan trọng hơn nhiều so với tiêu chí kia</td>
+        </tr>
+        <tr>
+          <td><strong>7</strong></td>
+          <td>Tiêu chí này quan trọng hơn rất nhiều so với tiêu chí kia</td>
+        </tr>
+        <tr>
+          <td><strong>9</strong></td>
+          <td>Tiêu chí này cực kỳ quan trọng hơn tiêu chí kia</td>
+        </tr>
+        <tr>
+          <td><strong>2, 4, 6, 8</strong></td>
+          <td>Các giá trị trung gian</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Cấu trúc thứ bậc -->
+<div class="section-card">
+  <h3>
+    <i class="fas fa-sitemap"></i> Cấu Trúc Thứ Bậc Bài Toán (AHP Hierarchy)
+  </h3>
+  <div style="overflow-x: auto; padding: 10px 0">
+    <!-- Goal -->
+    <div
+      style="display: flex; flex-direction: column; align-items: center; gap: 0"
+    >
+      <div
+        style="
+          background: linear-gradient(135deg, #059669, #10b981);
+          color: white;
+          border-radius: 12px;
+          padding: 14px 40px;
+          font-weight: 700;
+          font-size: 16px;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+          text-align: center;
+        "
+      >
+        <i class="fas fa-bullseye"></i> MỤC TIÊU <br />
+        <span style="font-size: 13px; font-weight: 400; opacity: 0.9"
+          >Đánh giá rủi ro tín dụng & Quyết định cho vay</span
+        >
+      </div>
+      <!-- Arrow down -->
+      <div style="width: 2px; height: 30px; background: #10b981"></div>
+      <!-- Criteria level -->
+      <div
+        style="
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          flex-wrap: wrap;
+        "
+      >
+        {% for criterion in criteria %}
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <div style="width: 2px; height: 20px; background: #10b981"></div>
+          <div
+            style="
+              background: #f0fdf4;
+              border: 2px solid #10b981;
+              border-radius: 10px;
+              padding: 10px 14px;
+              text-align: center;
+              min-width: 120px;
+              font-size: 13px;
+            "
+          >
+            <div style="color: #059669; font-weight: 700; margin-bottom: 4px">
+              <i class="fas fa-tag"></i> Tiêu chí {{ forloop.counter }}
+            </div>
+            <div style="color: #374151; font-weight: 600">{{ criterion }}</div>
+            <div style="color: #10b981; font-size: 12px; margin-top: 4px">
+              {{ weights|index:forloop.counter0|multiply:100|floatformat:1 }}%
+            </div>
+          </div>
+          <div style="width: 2px; height: 20px; background: #10b981"></div>
+          <div
+            style="
+              background: #fefce8;
+              border: 2px solid #f59e0b;
+              border-radius: 8px;
+              padding: 6px 10px;
+              text-align: center;
+              min-width: 120px;
+              font-size: 12px;
+              color: #92400e;
+            "
+          >
+            <i class="fas fa-users"></i> Phương án<br />
+            <span style="font-size: 11px">Duyệt / Điều kiện / Từ chối</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div
+    style="
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border-left: 4px solid #10b981;
+    "
+  >
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      "
+    >
+      <div>
+        <div style="color: #059669; font-weight: 700; margin-bottom: 6px">
+          <i class="fas fa-bullseye"></i> Mục tiêu
+        </div>
+        <div style="font-size: 14px; color: #374151">
+          Đánh giá rủi ro tín dụng khách hàng để đưa ra quyết định cho vay tối
+          ưu
+        </div>
+      </div>
+      <div>
+        <div style="color: #059669; font-weight: 700; margin-bottom: 6px">
+          <i class="fas fa-list-check"></i> Tiêu chí đánh giá
+        </div>
+        <ul
+          style="font-size: 14px; color: #374151; margin: 0; padding-left: 18px"
+        >
+          {% for criterion in criteria %}
+          <li>
+            {{ forloop.counter }}. {{ criterion }}
+            <span style="color: #10b981"
+              >({{ weights|index:forloop.counter0|multiply:100|floatformat:1
+              }}%)</span
+            >
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <div style="color: #059669; font-weight: 700; margin-bottom: 6px">
+          <i class="fas fa-code-branch"></i> Phương án
+        </div>
+        <ul
+          style="font-size: 14px; color: #374151; margin: 0; padding-left: 18px"
+        >
+          <li><span style="color: #16a34a">Duyệt</span> – Rủi ro thấp</li>
+          <li>
+            <span style="color: #d97706">Duyệt có điều kiện</span> – Rủi ro
+            trung bình
+          </li>
+          <li><span style="color: #dc2626">Từ chối</span> – Rủi ro cao</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bước 1: Ma trận so sánh cặp -->
+<div class="section-card">
+  <h3>
+    <i class="fas fa-th"></i> Bước 1: Ma Trận So Sánh Cặp (Pairwise Comparison
+    Matrix)
+  </h3>
+  <p>
+    Ma trận thể hiện mức độ quan trọng tương đối giữa các tiêu chí theo thang
+    Saaty.
+  </p>
+
+  <div class="matrix-table">
+    <table>
+      <thead>
+        <tr>
+          <th class="criteria-header">Tiêu chí</th>
+          {% for criterion in criteria %}
+          <th>{{ criterion }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in pairwise_matrix %}
+        <tr>
+          <th class="criteria-header">{{ criteria|index:forloop.counter0 }}</th>
+          {% for value in i %}
+          <td>{{ value|floatformat:2 }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box">
+    <strong><i class="fas fa-info-circle"></i> Giải thích:</strong> Giá trị tại
+    hàng i, cột j cho biết tiêu chí i quan trọng hơn tiêu chí j bao nhiêu lần.
+    Ví dụ: Lịch sử tín dụng (hàng 3) quan trọng hơn Thu nhập (cột 1) là 2 lần.
+  </div>
+</div>
+
+<!-- Bước 2: Tổng các cột -->
+<div class="section-card">
+  <h3><i class="fas fa-plus"></i> Bước 2: Tính Tổng Các Cột</h3>
+  <div class="formula-box">Tổng cột j = Σ (tất cả giá trị trong cột j)</div>
+
+  <div class="matrix-table">
+    <table>
+      <thead>
+        <tr>
+          <th class="criteria-header">Tiêu chí</th>
+          {% for criterion in criteria %}
+          <th>{{ criterion }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th class="criteria-header">Tổng cột</th>
+          {% for sum in column_sums %}
+          <td class="highlight">{{ sum|floatformat:3 }}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Bước 3: Ma trận chuẩn hóa -->
+<div class="section-card">
+  <h3>
+    <i class="fas fa-balance-scale"></i> Bước 3: Ma Trận Chuẩn Hóa (Normalized
+    Matrix)
+  </h3>
+  <div class="formula-box">
+    Giá trị chuẩn hóa[i][j] = Giá trị gốc[i][j] / Tổng cột[j]
+  </div>
+
+  <div class="matrix-table">
+    <table>
+      <thead>
+        <tr>
+          <th class="criteria-header">Tiêu chí</th>
+          {% for criterion in criteria %}
+          <th>{{ criterion }}</th>
+          {% endfor %}
+          <th style="background: #10b981">Trung bình hàng<br />(Trọng số)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in normalized_matrix %}
+        <tr>
+          <th class="criteria-header">{{ criteria|index:forloop.counter0 }}</th>
+          {% for value in i %}
+          <td>{{ value|floatformat:4 }}</td>
+          {% endfor %}
+          <td class="highlight">
+            {{ weights|index:forloop.counter0|floatformat:4 }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Bước 4: Trọng số cuối cùng -->
+<div class="section-card">
+  <h3><i class="fas fa-weight"></i> Bước 4: Trọng Số Các Tiêu Chí</h3>
+  <p>Trọng số = Trung bình các giá trị chuẩn hóa của mỗi hàng</p>
+
+  <div class="weight-container">
+    {% for criterion in criteria %}
+    <div style="margin-bottom: 14px">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 5px;
+        "
+      >
+        <span style="font-weight: 600; color: #333"
+          >{{ forloop.counter }}. {{ criterion }}</span
+        >
+        <span
+          id="weight-val-{{ forloop.counter0 }}"
+          style="
+            font-weight: bold;
+            color: #059669;
+            font-size: 15px;
+            min-width: 130px;
+            text-align: right;
+          "
+        >
+          {{ weights|index:forloop.counter0|floatformat:4 }}&nbsp;({{
+          weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+        </span>
+      </div>
+      <div
+        style="
+          background: #e8f5e9;
+          border-radius: 8px;
+          height: 28px;
+          width: 100%;
+          overflow: hidden;
+        "
+      >
+        <div
+          id="weight-bar-{{ forloop.counter0 }}"
+          style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: {{ weights|index:forloop.counter0|multiply:100 }}%; border-radius: 8px; transition: width 0.5s ease;"
+        ></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Bước 5: Kiểm tra tính nhất quán -->
+<div class="section-card">
+  <h3>
+    <i class="fas fa-check-circle"></i> Bước 5: Kiểm Tra Tính Nhất Quán
+    (Consistency Check)
+  </h3>
+
+  <p><strong>Bước 5.1: Tính Vector Nhất Quán (Consistency Vector)</strong></p>
+  <div class="matrix-table" style="overflow-x: auto">
+    <table>
+      <thead>
+        <tr>
+          <th class="criteria-header">Tiêu chí</th>
+          <th style="background: #e8f5e9">Weighted Sum Value</th>
+          <th style="background: #e8f5e9">Criteria Weights</th>
+          <th style="background: #10b981; color: white">Consistency Vector</th>
+        </tr>
+      </thead>
+      <tbody id="consistency-vector-body">
+        {% for criterion in criteria %}
+        <tr>
+          <th class="criteria-header">{{ criterion }}</th>
+          <td style="font-weight: bold; color: #059669">
+            {{ weighted_sum|index:forloop.counter0|floatformat:4 }}
+          </td>
+          <td style="font-weight: bold; color: #059669">
+            {{ weights|index:forloop.counter0|floatformat:4 }}
+          </td>
+          <td style="font-weight: bold; color: #10b981">
+            {{ consistency_vector|index:forloop.counter0|floatformat:4 }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="formula-box" style="margin-bottom: 20px">
+    <strong>Công thức:</strong><br />
+    - Weighted Sum Value của tiĂªu chĂ i = Σ (Giá trị hàng i cột j Ă— Trọng số
+    tiĂªu chĂ j)<br />
+    - Consistency Vector = Weighted Sum Value / Criteria Weight
+  </div>
+
+  <p><strong>Bước 5.2: Tính kết quả CR</strong></p>
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="label">λ max</div>
+      <div class="value" id="step5-lambda">{{ lambda_max }}</div>
+    </div>
+    <div class="info-item">
+      <div class="label">CI (Consistency Index)</div>
+      <div class="value" id="step5-ci">{{ ci }}</div>
+    </div>
+    <div class="info-item">
+      <div class="label">RI (Random Index)</div>
+      <div class="value" id="step5-ri">{{ ri }}</div>
+    </div>
+    <div class="info-item">
+      <div class="label">CR (Consistency Ratio)</div>
+      <div class="value" id="step5-cr">{{ cr }}</div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <strong>Công thức:</strong><br />
+    CI = (λmax - n) / (n - 1)<br />
+    CR = CI / RI<br /><br />
+    <strong>Với:</strong><br />
+    - n = số tiêu chí = {{ criteria|length }}<br />
+    - RI (Random Index) cho n=5 là {{ ri }}<br />
+    - CR < 0.1 → Ma trận nhất quán (chấp nhận được)
+  </div>
+
+  <div
+    id="step5-consistency-box"
+    class="consistency-box {% if is_consistent %}consistency-pass{% else %}consistency-fail{% endif %}"
+  >
+    {% if is_consistent %}<i class="fas fa-check-circle"></i> MA TRẬN NHẤT QUÁN
+    (CR = {{ cr }} &lt; 0.1) {% else %}<i class="fas fa-times-circle"></i> MA
+    TRẬN KHÔNG NHẤT QUÁN (CR = {{ cr }} ≥ 0.1) {% endif %}
+  </div>
+
+  <div class="note-box">
+    <strong><i class="fas fa-lightbulb"></i> Ý nghĩa:</strong>
+    Tỷ số nhất quán CR đo lường mức độ logic trong việc so sánh các tiêu chí. CR
+    < 0.1 cho thấy các đánh giá so sánh là hợp lý và không mâu thuẫn.
+  </div>
+</div>
+
+<!-- Tóm tắt -->
+<div class="section-card">
+  <h3><i class="fas fa-clipboard-check"></i> Kết Luận</h3>
+  <p style="font-size: 16px; line-height: 1.8">
+    Ma trận AHP đã được tính toán với
+    <strong>{{ criteria|length }} tiêu chí</strong> đánh giá rủi ro tín dụng.
+    Trọng số các tiêu chí được xác định dựa trên phương pháp Eigenvector, với tỷ
+    số nhất quán <strong>CR = {{ cr }}</strong>
+    {% if is_consistent %}(nhỏ hơn 0.1, đạt yêu cầu){% else %}(lớn hơn 0.1, cần
+    xem xét lại){% endif %}.
+  </p>
+
+  <div style="margin-top: 20px">
+    <h4 style="color: #10b981; margin-bottom: 15px">
+      Thứ tự ưu tiên các tiêu chí:
+    </h4>
+    <ol style="font-size: 16px; line-height: 2">
+      {% for criterion in criteria %}
+      <li>
+        <strong>{{ criterion }}</strong>: {{
+        weights|index:forloop.counter0|floatformat:4 }} ({{
+        weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+
+<!-- Kết quả tính toán real-time -->
+<div id="realtime-results" style="display: none"></div>
+
+<script>
+  let calculateAHPFunc = null; // Reference to calculateAHP function
+
+  // Function chuyển số thập phân sang phân số
+  function decimalToFraction(decimal) {
+    const tolerance = 1.0E-6;
+    let h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+    let b = decimal;
+
+    do {
+      let a = Math.floor(b);
+      let aux = h1;
+      h1 = a * h1 + h2;
+      h2 = aux;
+      aux = k1;
+      k1 = a * k1 + k2;
+      k2 = aux;
+      b = 1 / (b - a);
+    } while (Math.abs(decimal - h1 / k1) > decimal * tolerance);
+
+    return { numerator: h1, denominator: k1 };
+  }
+
+  // Function format số sang phân số hoặc số nguyên
+  function formatAsFraction(value) {
+    value = parseFloat(value);
+
+    // Nếu là số nguyên, trả về số nguyên (không có phần thập phân)
+    if (Math.abs(value - Math.round(value)) < 0.001) {
+      return Math.round(value).toString();
+    }
+
+    // Chuyển sang phân số
+    const frac = decimalToFraction(value);
+
+    // Nếu mẫu số = 1, trả về tử số
+    if (frac.denominator === 1) {
+      return frac.numerator.toString();
+    }
+
+    // Trả về dạng phân số (ví dụ: 1/2, 1/3)
+    return `${frac.numerator}/${frac.denominator}`;
+  }
+
+  // Định nghĩa các mẫu ma trận preset
+  const matrixPresets = {
+    'default': [
+      [1,   2,   1/2, 3,   5],   // Thu nhập
+      [1/2, 1,   1/3, 2,   4],   // Nghề nghiệp
+      [2,   3,   1,   3,   5],   // Lịch sử tín dụng
+      [1/3, 1/2, 1/3, 1,   3],   // Dư nợ/Thu nhập
+      [1/5, 1/4, 1/5, 1/3, 1]    // Tài sản đảm bảo
+    ],
+    'credit_history': [
+      [1,   1/2, 1/3, 2,   3],   // Thu nhập
+      [2,   1,   1/2, 3,   4],   // Nghề nghiệp
+      [3,   2,   1,   4,   5],   // Lịch sử tín dụng (cao nhất)
+      [1/2, 1/3, 1/4, 1,   2],   // Dư nợ/Thu nhập
+      [1/3, 1/4, 1/5, 1/2, 1]    // Tài sản đảm bảo
+    ],
+    'income': [
+      [1,   3,   2,   4,   5],   // Thu nhập (cao nhất)
+      [1/3, 1,   1/2, 2,   3],   // Nghề nghiệp
+      [1/2, 2,   1,   3,   4],   // Lịch sử tín dụng
+      [1/4, 1/2, 1/3, 1,   2],   // Dư nợ/Thu nhập
+      [1/5, 1/3, 1/4, 1/2, 1]    // Tài sản đảm bảo
+    ],
+    'employment': [
+      [1,   1/2, 1/2, 3,   4],   // Thu nhập
+      [2,   1,   2,   4,   5],   // Nghề nghiệp (cao nhất)
+      [2,   1/2, 1,   3,   4],   // Lịch sử tín dụng
+      [1/3, 1/4, 1/3, 1,   2],   // Dư nợ/Thu nhập
+      [1/4, 1/5, 1/4, 1/2, 1]    // Tài sản đảm bảo
+    ],
+    'conservative': [
+      [1,   2,   1/2, 2,   1/3],   // Thu nhập
+      [1/2, 1,   1/3, 1,   1/4],   // Nghề nghiệp
+      [2,   3,   1,   3,   1/2],   // Lịch sử tín dụng
+      [1/2, 1,   1/3, 1,   1/3],   // Dư nợ/Thu nhập
+      [3,   4,   2,   3,   1]      // Tài sản đảm bảo (cao nhất)
+    ],
+    'balanced': [
+      [1,   2,   1,   3,   4],   // Thu nhập (cân bằng)
+      [1/2, 1,   1/2, 2,   3],   // Nghề nghiệp
+      [1,   2,   1,   3,   4],   // Lịch sử tín dụng (cân bằng)
+      [1/3, 1/2, 1/3, 1,   2],   // Dư nợ/Thu nhập
+      [1/4, 1/3, 1/4, 1/2, 1]    // Tài sản đảm bảo
+    ]
+  };
+
+  // Auto-reset timer (10 phút = 600000ms)
+  let resetTimer = null;
+  const AUTO_RESET_TIME = 600000; // 10 phút
+
+
+
+  // Load preset matrix
+  window.loadPreset = function(presetName) {
+    const matrix = matrixPresets[presetName];
+    if (!matrix) {
+      console.error('Preset not found:', presetName);
+      return;
+    }
+
+    const n = 5;
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (i !== j) {
+          const input = document.querySelector(`input[name="cell_${i}_${j}"]`);
+          if (input && !input.disabled) {
+            const value = matrix[i][j];
+            input.value = formatAsFraction(value);
+            input.setAttribute('data-value', value);
+            input.style.borderColor = '#10b981';
+            input.style.backgroundColor = 'white';
+          }
+        }
+      }
+    }
+
+    // Trigger calculation
+    if (calculateAHPFunc) {
+      calculateAHPFunc();
+    }
+
+    // Show notification
+    const presetNames = {
+      'default': 'Ma Trận Mặc Định',
+      'credit_history': 'Ưu Tiên Lịch Sử Tín Dụng',
+      'income': 'Ưu Tiên Thu Nhập',
+      'employment': 'Ưu Tiên Nghề Nghiệp',
+      'conservative': 'Bảo Thủ',
+      'balanced': 'Cân Bằng'
+    };
+
+    const notification = document.createElement('div');
+    notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 9999; animation: slideIn 0.3s ease;';
+    notification.innerHTML = `<i class="fas fa-check-circle"></i> Đã áp dụng: <strong>${presetNames[presetName]}</strong>`;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 2500);
+  };
+
+
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const criteria = [
+      {% for c in criteria %}'{{ c }}'{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+    const n = 5; // số tiêu chí
+    const RI = 1.12; // Random Index cho n=5
+
+    const inputs = document.querySelectorAll('.matrix-input-table input:not([disabled])');
+    const saveBtn = document.querySelector('.btn-save');
+    const form = document.querySelector('form');
+
+    // Format các giá trị hiện có sang phân số khi load trang
+    inputs.forEach(input => {
+      const currentValue = parseFloat(input.value);
+      if (!isNaN(currentValue)) {
+        input.setAttribute('data-value', currentValue);
+        input.value = formatAsFraction(currentValue);
+      }
+    });
+
+    // Tự động select all text khi focus vào input để dễ ghi đè
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.select();
+      });
+
+      input.addEventListener('click', function() {
+        this.select();
+      });
+    });
+
+    // Prevent form submission if CR >= 0.1
+    form.addEventListener('submit', function(e) {
+      if (saveBtn.disabled) {
+        e.preventDefault();
+        alert('Không thể lưu! Ma trận không nhất quán (CR ≥ 0.1). Vui lòng điều chỉnh lại các giá trị.');
+        return false;
+      }
+
+      // Chuyển tất cả giá trị về số thập phân (dấu chấm) trước khi submit
+      inputs.forEach(input => {
+        let value;
+        if (input.hasAttribute('data-value')) {
+          value = parseFloat(input.getAttribute('data-value'));
+        } else if (input.value.includes('/')) {
+          const parts = input.value.split('/');
+          value = parseFloat(parts[0]) / parseFloat(parts[1]);
+        } else {
+          // Xử lý số có thể có dấu phẩy
+          value = parseFloat(input.value.replace(',', '.'));
+        }
+        // Đảm bảo format với dấu chấm (không phải dấu phẩy)
+        input.value = value.toString().replace(',', '.');
+      });
+    });
+
+    // Lắng nghe sự kiện input
+    inputs.forEach(input => {
+      input.addEventListener('input', function() {
+        const [_, row, col] = this.name.match(/cell_(\d+)_(\d+)/);
+        let value = this.value.trim();
+
+        // Xử lý input phân số (vd: 1/2, 1/3)
+        if (value.includes('/')) {
+          const parts = value.split('/');
+          if (parts.length === 2) {
+            const num = parseFloat(parts[0]);
+            const den = parseFloat(parts[1]);
+            if (!isNaN(num) && !isNaN(den) && den !== 0) {
+              value = num / den;
+              this.setAttribute('data-value', value);
+            } else {
+              value = 1;
+            }
+          }
+        } else {
+          const parsedValue = parseFloat(value);
+          if (!isNaN(parsedValue) && parsedValue > 0) {
+            value = parsedValue;
+          } else {
+            value = 1;
+          }
+          this.setAttribute('data-value', value);
+        }
+
+        value = parseFloat(value) || 1;
+
+        // Validate giá trị (0.1 - 9)
+        if (value < 0.1 || value > 9) {
+          this.style.borderColor = '#ef4444';
+          this.style.backgroundColor = '#fee2e2';
+        } else {
+          this.style.borderColor = '#10b981';
+          this.style.backgroundColor = 'white';
+        }
+
+        // Tự động điền ô đối xứng = 1/value
+        if (row !== col) {
+          const oppositeInput = document.querySelector(`input[name="cell_${col}_${row}"]`);
+          if (oppositeInput && !oppositeInput.disabled) {
+            const oppositeValue = 1 / value;
+            oppositeInput.value = formatAsFraction(oppositeValue);
+            oppositeInput.setAttribute('data-value', oppositeValue);
+            if (oppositeValue >= 0.1 && oppositeValue <= 9) {
+              oppositeInput.style.borderColor = '#10b981';
+              oppositeInput.style.backgroundColor = 'white';
+            }
+          }
+        }
+
+        // Tính toán và hiển thị kết quả
+        calculateAHP();
+      });
+    });
+
+    function calculateAHP() {
+      // Kiểm tra tất cả các ô có hợp lệ không
+      let hasInvalidValue = false;
+      const allInputs = document.querySelectorAll('.matrix-input-table input:not([disabled])');
+
+      allInputs.forEach(input => {
+        const val = parseFloat(input.getAttribute('data-value') || input.value);
+        if (isNaN(val) || val < 0.1 || val > 9) {
+          hasInvalidValue = true;
+          input.style.borderColor = '#ef4444';
+          input.style.backgroundColor = '#fee2e2';
+        }
+      });
+
+      // Nếu có giá trị không hợp lệ, disable nút và hiển thị cảnh báo
+      if (hasInvalidValue) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+
+        const validationMsg = document.getElementById('validation-message');
+        validationMsg.innerHTML = `
+          <div style="background: #fee2e2; border: 2px solid #ef4444; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Lỗi:</strong>
+            <p style="color: #dc2626; margin: 5px 0 0 0;">
+              Có giá trị không hợp lệ trong ma trận! Vui lòng nhập giá trị từ 0.1 đến 9 (hoặc phân số như 1/2, 1/3, ...).
+              <br/>Các ô có viền đỏ cần được sửa lại.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      // Thu thập ma trận từ form
+      const matrix = [];
+      for (let i = 0; i < n; i++) {
+        const row = [];
+        for (let j = 0; j < n; j++) {
+          const input = document.querySelector(`input[name="cell_${i}_${j}"]`);
+          let value;
+
+          // Ưu tiên sử dụng data-value nếu có
+          if (input.hasAttribute('data-value')) {
+            value = parseFloat(input.getAttribute('data-value'));
+          } else {
+            // Parse từ value (có thể là phân số hoặc số)
+            const strValue = input.value.trim();
+            if (strValue.includes('/')) {
+              const parts = strValue.split('/');
+              value = parseFloat(parts[0]) / parseFloat(parts[1]);
+            } else {
+              value = parseFloat(strValue);
+            }
+          }
+
+          row.push(value || 1);
+        }
+        matrix.push(row);
+      }
+
+      // Bước 1: Tính tổng các cột
+      const columnSums = [];
+      for (let j = 0; j < n; j++) {
+        let sum = 0;
+        for (let i = 0; i < n; i++) {
+          sum += matrix[i][j];
+        }
+        columnSums.push(sum);
+      }
+
+      // Bước 2: Chuẩn hóa ma trận
+      const normalizedMatrix = [];
+      for (let i = 0; i < n; i++) {
+        const row = [];
+        for (let j = 0; j < n; j++) {
+          row.push(matrix[i][j] / columnSums[j]);
+        }
+        normalizedMatrix.push(row);
+      }
+
+      // Bước 3: Tính trọng số (trung bình hàng)
+      const weights = [];
+      for (let i = 0; i < n; i++) {
+        const sum = normalizedMatrix[i].reduce((a, b) => a + b, 0);
+        weights.push(sum / n);
+      }
+
+      // Bước 4: Tính λmax
+      const weightedSums = [];
+      for (let i = 0; i < n; i++) {
+        let sum = 0;
+        for (let j = 0; j < n; j++) {
+          sum += matrix[i][j] * weights[j];
+        }
+        weightedSums.push(sum);
+      }
+
+      let lambdaMax = 0;
+      const consistencyVector = [];
+      for (let i = 0; i < n; i++) {
+        const cv = weightedSums[i] / weights[i];
+        consistencyVector.push(cv);
+        lambdaMax += cv;
+      }
+      lambdaMax /= n;
+
+      // Bước 5: Tính CI và CR
+      const CI = (lambdaMax - n) / (n - 1);
+      const CR = CI / RI;
+
+      // Hiển thị kết quả
+      displayResults(columnSums, weights, lambdaMax, CI, CR, weightedSums, consistencyVector);
+    }
+
+    function displayResults(columnSums, weights, lambdaMax, CI, CR, weightedSums, consistencyVector) {
+      const isConsistent = CR < 0.1;
+      const consistencyClass = isConsistent ? 'consistency-pass' : 'consistency-fail';
+      const icon = isConsistent ? 'fa-check-circle' : 'fa-times-circle';
+      const message = isConsistent ? 'MA TRẬN NHẤT QUÁN' : 'MA TRẬN KHÔNG NHẤT QUÁN - VUI LÒNG ĐIỀU CHỈNH';
+
+      // ── Cập nhật weight bars Bước 4 (real-time) ──
+      weights.forEach((w, idx) => {
+        const pct = (w * 100).toFixed(2);
+        const bar = document.getElementById(`weight-bar-${idx}`);
+        const val = document.getElementById(`weight-val-${idx}`);
+        if (bar) bar.style.width = pct + '%';
+        if (val) val.textContent = `${w.toFixed(4)} (${pct}%)`;
+      });
+
+      // ── Cập nhật Bước 5 info grid (real-time) ──
+      const elLambda = document.getElementById('step5-lambda');
+      const elCI     = document.getElementById('step5-ci');
+      const elCR     = document.getElementById('step5-cr');
+      if (elLambda) elLambda.textContent = lambdaMax.toFixed(4);
+      if (elCI)     elCI.textContent     = CI.toFixed(4);
+      if (elCR)     elCR.textContent     = CR.toFixed(4);
+
+      // ── Cập nhật consistency-box Bước 5 ──
+      const step5Box = document.getElementById('step5-consistency-box');
+      if (step5Box) {
+        step5Box.className = `consistency-box ${consistencyClass}`;
+        step5Box.innerHTML = isConsistent
+          ? `<i class="fas fa-check-circle"></i> MA TRẬN NHẤT QUÁN (CR = ${CR.toFixed(4)} &lt; 0.1)`
+          : `<i class="fas fa-times-circle"></i> MA TRẬN KHÔNG NHẤT QUÁN (CR = ${CR.toFixed(4)} ≥ 0.1)`;
+      }
+
+      // ── Cập nhật consistency-display trong form ──
+      const consistencyEl = document.getElementById('consistency-display');
+      if (consistencyEl) {
+        consistencyEl.innerHTML = `
+          <div class="consistency-box ${consistencyClass}" style="margin-top: 10px;">
+            <i class="fas ${icon}"></i> ${message} (CR = ${CR.toFixed(4)})
+          </div>
+        `;
+      }
+
+      // ── Validation message + trạng thái nút Lưu ──
+      const validationMsg = document.getElementById('validation-message');
+      if (!isConsistent) {
+        if (validationMsg) {
+          validationMsg.innerHTML = `
+          <div style="background: #fee2e2; border: 2px solid #ef4444; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Cảnh báo:</strong>
+            <p style="color: #dc2626; margin: 5px 0 0 0;">
+              Tỷ số nhất quán CR = ${CR.toFixed(4)} ≥ 0.1. Ma trận hiện tại không hợp lý!<br/>
+              Vui lòng điều chỉnh lại các giá trị so sánh để CR &lt; 0.1.
+            </p>
+          </div>
+          `;
+        }
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+        saveBtn.title = 'Không thể lưu - Ma trận không nhất quán';
+      } else {
+        if (validationMsg) {
+          validationMsg.innerHTML = `
+          <div style="background: #d1fae5; border: 2px solid #10b981; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <strong style="color: #059669;"><i class="fas fa-check-circle"></i> Hợp lệ:</strong>
+            <p style="color: #059669; margin: 5px 0 0 0;">
+              Ma trận nhất quán (CR = ${CR.toFixed(4)} &lt; 0.1). Bạn có thể lưu ma trận này!
+            </p>
+          </div>
+          `;
+        }
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+        saveBtn.title = '';
+      }
+    }
+
+    // Gán calculateAHP vào global variable để có thể gọi từ loadPreset
+    calculateAHPFunc = calculateAHP;
+
+    // Tính toán lần đầu với giá trị hiện tại
+    calculateAHP();
+  });
+</script>
+
+{% endblock %}

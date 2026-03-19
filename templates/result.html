@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% load custom_filters %} {% block title %}Kết Quả
-Đánh Giá{% endblock %} {% block extra_css %}
+{% extends "base.html" %} {% load custom_filters %} {% load humanize %} {% block title %}Kết Quả Đánh Giá{% endblock %} {% block extra_css %}
 <style>
   .result-header {
     text-align: center;
@@ -64,22 +63,33 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
-  .decision-approved {
-    background: #d4edda;
-    color: #155724;
-    border: 3px solid #28a745;
+  /* ── Tối giản hóa Decision Box ── */
+  .decision-box {
+    padding: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    border: none;
+    box-shadow: none;
+    background: transparent;
   }
 
-  .decision-conditional {
-    background: #fff3cd;
-    color: #856404;
-    border: 3px solid #ffc107;
+  .decision-approved .decision-title {
+    color: #059669;
   }
 
-  .decision-rejected {
-    background: #f8d7da;
-    color: #721c24;
-    border: 3px solid #dc3545;
+  .decision-conditional .decision-title {
+    color: #d97706;
+  }
+
+  .decision-rejected .decision-title {
+    color: #dc2626;
+  }
+
+  .decision-title {
+    font-size: 48px;
+    font-weight: 850;
+    letter-spacing: 2px;
+    display: block;
   }
 
   .info-section {
@@ -247,11 +257,26 @@
   <p>Phân tích bằng AHP và Machine Learning</p>
 </div>
 
-<div class="decision-box decision-{{ result.decision.decision|lower }}">
-  {% if result.decision.decision == "Duyệt" %} ✅ {{
-  result.decision.decision|upper }} {% elif result.decision.decision == "Duyệt
-  có điều kiện" %} ⚠️ {{ result.decision.decision|upper }} {% else %} ❌ {{
-  result.decision.decision|upper }} {% endif %}
+<div class="decision-box decision-{% if result.decision.decision_class == 'success' %}approved{% elif result.decision.decision_class == 'warning' %}conditional{% else %}rejected{% endif %}">
+  {% if result.decision.decision_class == "success" %}
+    <span class="decision-title">DUYỆT</span>
+  {% elif result.decision.decision_class == "warning" %}
+    <span class="decision-title">DUYỆT CÓ ĐIỀU KIỆN</span>
+  {% else %}
+    <span class="decision-title">TỪ CHỐI</span>
+  {% endif %}
+</div>
+
+<!-- Đưa giải thích lên ngay dưới kết quả -->
+<div class="info-section">
+  <div class="explanation-box" style="border-left: 6px solid #10b981; background: #f8fafc; padding: 25px; border-radius: 0 15px 15px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+    <h4 style="margin: 0 0 12px 0; color: #059669; font-weight: 700; display:flex; align-items:center; gap:10px;">
+      <i class="fas fa-robot"></i> KẾT LUẬN CHI TIẾT TỪ HỆ THỐNG:
+    </h4>
+    <div style="font-size: 16px; color: #334155; line-height: 1.6; font-weight: 500;">
+      {{ result.decision.explanation|linebreaksbr }}
+    </div>
+  </div>
 </div>
 
 <div class="info-section">
@@ -284,22 +309,22 @@
 <div class="info-section">
   <h3>💰 Gợi Ý Hạn Mức Vay</h3>
   <div class="info-grid">
-    <div class="info-card">
-      <div class="label">Số Tiền Khách Hàng Yêu Cầu</div>
-      <div class="value">{{ requested_amount|floatformat:0 }} VNĐ</div>
+    <div class="info-card" style="border: 1px solid #e2e8f0;">
+      <div class="label">Số Tiền Khách Yêu Cầu</div>
+      <div class="value" style="color: #475569; font-size: 24px;">{{ requested_amount|intcomma }} VNĐ</div>
     </div>
 
-    <div class="info-card">
-      <div class="label">Hạn Mức Tối Đa Được Chấp Thuận</div>
-      <div class="value" style="color: #28a745">
-        {{ result.decision.max_loan_amount|floatformat:0 }} VNĐ
+    <div class="info-card" style="border: 1.5px solid #10b981; background: #f0fdf4;">
+      <div class="label" style="color: #059669; font-weight: bold;">Hạn Mức Tối Đa Có Thể Duyệt</div>
+      <div class="value" style="color: #059669; font-size: 26px;">
+        {% if result.decision.max_loan_amount %}{{ result.decision.max_loan_amount|intcomma }} VNĐ{% else %}0 VNĐ{% endif %}
       </div>
     </div>
 
-    <div class="info-card">
-      <div class="label">Gợi Ý Hạn Mức An Toàn</div>
-      <div class="value" style="color: #667eea">
-        {{ result.decision.recommended_amount|floatformat:0 }} VNĐ
+    <div class="info-card" style="border: 1.5px solid #6366f1; background: #f5f3ff;">
+      <div class="label" style="color: #4f46e5; font-weight: bold;">Hạn Mức An Toàn Đề Xuất</div>
+      <div class="value" style="color: #4f46e5; font-size: 26px;">
+        {% if result.decision.recommended_amount %}{{ result.decision.recommended_amount|intcomma }} VNĐ{% else %}0 VNĐ{% endif %}
       </div>
     </div>
   </div>
@@ -340,9 +365,7 @@
     </tbody>
   </table>
   <p style="margin-top: 10px; color: #666; font-size: 14px">
-    <strong>Consistency Ratio (CR):</strong> {{
-    result.ahp.consistency_ratio|floatformat:4 }} {% if
-    result.ahp.consistency_ratio < 0.1 %}
+    <strong>Consistency Ratio (CR):</strong> {{ result.ahp.consistency_ratio|floatformat:4 }} {% if result.ahp.consistency_ratio < 0.1 %}
     <span style="color: #28a745">✓ Nhất quán</span>
     {% else %}
     <span style="color: #dc3545">✗ Không nhất quán</span>
@@ -386,12 +409,7 @@
   </div>
 </div>
 
-<div class="info-section">
-  <h3>📝 Giải Thích Quyết Định</h3>
-  <div class="explanation-box">
-    {{ result.decision.explanation|linebreaks }}
-  </div>
-</div>
+<!-- Đã dời phần giải thích lên trên -->
 
 <div class="action-buttons">
   <a href="{% url 'credit_app:index' %}" class="btn">🔄 Đánh Giá Mới</a>

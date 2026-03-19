@@ -1,5 +1,5 @@
-/* ==========================================
-   CUSTOM CSS - HỆ HỖ TRỢ RA QUYẾT ĐỊNH
+﻿/* ==========================================
+   CUSTOM CSS - Há»† Há»– TRá»¢ RA QUYáº¾T Äá»NH
    Modern, Clean, Professional Design
    ========================================== */
 
@@ -20,7 +20,11 @@
 }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   background-color: var(--bg-light);
   color: var(--text-dark);
@@ -170,8 +174,8 @@ body {
 
 /* ========== RESULT PANEL ========== */
 .result-panel {
-  position: sticky;
-  top: 2rem;
+  /* position: sticky; */
+  /* top: 2rem; */
 }
 
 .result-card {

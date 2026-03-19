@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% load static %} {% block title %}Dự Đoán Rủi Ro Tín
-Dụng{% endblock %} {% block content %}
+{% extends "base.html" %} {% load static %} {% load custom_filters %} {% block title %}Dự Đoán Rủi Ro Tín Dụng{% endblock %} {% block content %}
 <div class="row">
   <!-- LEFT COLUMN: FORM (Desktop: 8 cols, Mobile: 12 cols) -->
   <div class="col-lg-8 col-12">
@@ -31,7 +30,9 @@ Dụng{% endblock %} {% block content %}
               max="50"
               required
               placeholder="Ví dụ: 30"
-              oninvalid="this.setCustomValidity('Vui lòng nhập tuổi từ 18 đến 50')"
+              oninvalid="
+                this.setCustomValidity('Vui lòng nhập tuổi từ 18 đến 50')
+              "
               oninput="this.setCustomValidity('')"
             />
             <div class="form-text">Độ tuổi từ 18-50</div>
@@ -98,7 +99,11 @@ Dụng{% endblock %} {% block content %}
               step="0.5"
               required
               placeholder="Ví dụ: 5"
-              oninvalid="this.setCustomValidity('Vui lòng nhập thâm niên từ 0 đến 50 năm')"
+              oninvalid="
+                this.setCustomValidity(
+                  'Vui lòng nhập thâm niên từ 0 đến 50 năm',
+                )
+              "
               oninput="this.setCustomValidity('')"
             />
             <div class="form-text">Số năm làm việc (0-50)</div>
@@ -137,7 +142,11 @@ Dụng{% endblock %} {% block content %}
               step="0.5"
               required
               placeholder="Ví dụ: 10"
-              oninvalid="this.setCustomValidity('Vui lòng nhập lịch sử tín dụng từ 0 đến 50 năm')"
+              oninvalid="
+                this.setCustomValidity(
+                  'Vui lòng nhập lịch sử tín dụng từ 0 đến 50 năm',
+                )
+              "
               oninput="this.setCustomValidity('')"
             />
             <div class="form-text">Số năm có tín dụng (0-50)</div>
@@ -229,7 +238,9 @@ Dụng{% endblock %} {% block content %}
               step="0.01"
               required
               placeholder="Ví dụ: 8.5"
-              oninvalid="this.setCustomValidity('Vui lòng nhập lãi suất từ 0% đến 30%')"
+              oninvalid="
+                this.setCustomValidity('Vui lòng nhập lãi suất từ 0% đến 30%')
+              "
               oninput="this.setCustomValidity('')"
             />
             <div class="form-text">8.5% = 8.5</div>
@@ -252,7 +263,11 @@ Dụng{% endblock %} {% block content %}
               step="0.01"
               required
               placeholder="Ví dụ: 0.3"
-              oninvalid="this.setCustomValidity('Vui lòng nhập tỷ lệ từ 0 đến 1 (VD: 0.3 = 30%)')"
+              oninvalid="
+                this.setCustomValidity(
+                  'Vui lòng nhập tỷ lệ từ 0 đến 1 (VD: 0.3 = 30%)',
+                )
+              "
               oninput="this.setCustomValidity('')"
             />
             <div class="form-text">30% = 0.3</div>
@@ -272,6 +287,80 @@ Dụng{% endblock %} {% block content %}
 
   <!-- RIGHT COLUMN: RESULT PANEL (Desktop: 4 cols, Mobile: 12 cols) -->
   <div class="col-lg-4 col-12">
+    <!-- AHP Weights Info Card -->
+    <div class="result-panel mb-3">
+      <div
+        class="result-card"
+        style="
+          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+          border: 2px solid #10b981;
+        "
+      >
+        <h5 class="text-center mb-3" style="color: #059669">
+          <i class="fas fa-balance-scale"></i> Trọng Số AHP Hiện Tại {% if is_custom_matrix %}
+          <span class="badge bg-warning text-dark" style="font-size: 11px">Tùy chỉnh</span>
+          {% endif %}
+        </h5>
+
+        <div style="font-size: 12px">
+          {% for criterion in ahp_criteria %}
+          <div
+            class="mb-2"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <div style="min-width: 140px; color: #059669; font-weight: 600">
+              {{ forloop.counter }}. {{ criterion }}
+            </div>
+            <div
+              style="
+                flex: 1;
+                background: #e0e0e0;
+                border-radius: 5px;
+                height: 20px;
+                position: relative;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: {{ ahp_weights|index:forloop.counter0|multiply:100 }}%; border-radius: 5px;"
+              ></div>
+            </div>
+            <div
+              style="
+                min-width: 50px;
+                text-align: right;
+                font-weight: bold;
+                color: #059669;
+              "
+            >
+              {{ ahp_weights|index:forloop.counter0|multiply:100|floatformat:1 }}%
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div
+          class="text-center mt-3 pt-2"
+          style="border-top: 2px solid #10b981"
+        >
+          <a
+            href="{% url 'credit_app:ahp_matrix' %}"
+            class="btn btn-sm"
+            style="
+              background: #10b981;
+              color: white;
+              text-decoration: none;
+              padding: 6px 15px;
+              border-radius: 5px;
+              font-size: 12px;
+            "
+          >
+            <i class="fas fa-edit"></i> Chỉnh sửa ma trận
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="result-panel">
       <div class="result-card">
         <h4 class="text-center mb-3">
@@ -497,7 +586,7 @@ Dụng{% endblock %} {% block content %}
 
       // Check employment length
       const empLength = parseFloat(
-        document.getElementById("person_emp_length").value
+        document.getElementById("person_emp_length").value,
       );
       if (empLength < 0 || empLength > 50) {
         document
@@ -508,7 +597,7 @@ Dụng{% endblock %} {% block content %}
 
       // Check credit history
       const credHistory = parseFloat(
-        document.getElementById("cb_person_cred_hist_length").value
+        document.getElementById("cb_person_cred_hist_length").value,
       );
       if (credHistory < 0 || credHistory > 50) {
         document
@@ -519,7 +608,7 @@ Dụng{% endblock %} {% block content %}
 
       // Check interest rate
       const intRate = parseFloat(
-        document.getElementById("loan_int_rate").value
+        document.getElementById("loan_int_rate").value,
       );
       if (intRate < 0 || intRate > 30) {
         document.getElementById("loan_int_rate").classList.add("is-invalid");
@@ -528,7 +617,7 @@ Dụng{% endblock %} {% block content %}
 
       // Check loan percent income
       const loanPercent = parseFloat(
-        document.getElementById("loan_percent_income").value
+        document.getElementById("loan_percent_income").value,
       );
       if (loanPercent < 0 || loanPercent > 1) {
         document

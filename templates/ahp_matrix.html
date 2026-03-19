@@ -513,12 +513,14 @@ AHP{% endblock %} {% block extra_css %}
   <h4><i class="fas fa-star"></i> Trọng Số Hiện Tại</h4>
   <div class="summary-weights">
     {% for criterion in criteria %}
+    {% with wp=weights|index:forloop.counter0|multiply:100 %}
     <div class="summary-weight-item">
       <div class="label">{{ forloop.counter }}. {{ criterion }}</div>
       <div class="value">
-        {{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%
+        {{ wp|floatformat:2 }}%
       </div>
     </div>
+    {% endwith %}
     {% endfor %}
   </div>
   <div
@@ -745,6 +747,7 @@ AHP{% endblock %} {% block extra_css %}
         "
       >
         {% for criterion in criteria %}
+        {% with wp=weights|index:forloop.counter0|multiply:100 %}
         <div style="display: flex; flex-direction: column; align-items: center">
           <div style="width: 2px; height: 20px; background: #10b981"></div>
           <div
@@ -763,7 +766,7 @@ AHP{% endblock %} {% block extra_css %}
             </div>
             <div style="color: #374151; font-weight: 600">{{ criterion }}</div>
             <div style="color: #10b981; font-size: 12px; margin-top: 4px">
-              {{ weights|index:forloop.counter0|multiply:100|floatformat:1 }}%
+              {{ wp|floatformat:1 }}%
             </div>
           </div>
           <div style="width: 2px; height: 20px; background: #10b981"></div>
@@ -783,6 +786,7 @@ AHP{% endblock %} {% block extra_css %}
             <span style="font-size: 11px">Duyệt / Điều kiện / Từ chối</span>
           </div>
         </div>
+        {% endwith %}
         {% endfor %}
       </div>
     </div>
@@ -820,12 +824,12 @@ AHP{% endblock %} {% block extra_css %}
           style="font-size: 14px; color: #374151; margin: 0; padding-left: 18px"
         >
           {% for criterion in criteria %}
+          {% with wp=weights|index:forloop.counter0|multiply:100 %}
           <li>
             {{ forloop.counter }}. {{ criterion }}
-            <span style="color: #10b981"
-              >({{ weights|index:forloop.counter0|multiply:100|floatformat:1 }}%)</span
-            >
+            <span style="color: #10b981">({{ wp|floatformat:1 }}%)</span>
           </li>
+          {% endwith %}
           {% endfor %}
         </ul>
       </div>
@@ -961,6 +965,7 @@ AHP{% endblock %} {% block extra_css %}
 
   <div class="weight-container">
     {% for criterion in criteria %}
+    {% with w=weights|index:forloop.counter0 wp=weights|index:forloop.counter0|multiply:100 %}
     <div style="margin-bottom: 14px">
       <div
         style="
@@ -983,7 +988,7 @@ AHP{% endblock %} {% block extra_css %}
             text-align: right;
           "
         >
-          {{ weights|index:forloop.counter0|floatformat:4 }}&nbsp;({{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+          {{ w|floatformat:4 }}&nbsp;({{ wp|floatformat:2 }}%)
         </span>
       </div>
       <div
@@ -997,10 +1002,11 @@ AHP{% endblock %} {% block extra_css %}
       >
         <div
           id="weight-bar-{{ forloop.counter0 }}"
-          style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: {{ weights|index:forloop.counter0|multiply:100 }}%; border-radius: 8px; transition: width 0.5s ease;"
+          style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: {{ wp }}%; border-radius: 8px; transition: width 0.5s ease;"
         ></div>
       </div>
     </div>
+    {% endwith %}
     {% endfor %}
   </div>
 </div>
@@ -1112,9 +1118,11 @@ AHP{% endblock %} {% block extra_css %}
     </h4>
     <ol style="font-size: 16px; line-height: 2">
       {% for criterion in criteria %}
+      {% with w=weights|index:forloop.counter0 wp=weights|index:forloop.counter0|multiply:100 %}
       <li>
-        <strong>{{ criterion }}</strong>: {{ weights|index:forloop.counter0|floatformat:4 }} ({{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+        <strong>{{ criterion }}</strong>: {{ w|floatformat:4 }} ({{ wp|floatformat:2 }}%)
       </li>
+      {% endwith %}
       {% endfor %}
     </ol>
   </div>

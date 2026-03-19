@@ -350,6 +350,8 @@ def predict(request):
             'alternative_result': ahp_result.get('alternative_result', {}),
         }
 
+        messages.success(request, 'Du doan thanh cong! He thong da xu ly va hien thi ket qua ben duoi.')
+
         return render(request, 'result.html', context)
 
         

@@ -257,6 +257,12 @@
   <p>Phân tích bằng AHP và Machine Learning</p>
 </div>
 
+{% if prediction_success %}
+<div class="alert alert-success" role="alert" style="border: 1px solid #10b981; background: #ecfdf5; color: #065f46; font-weight: 600;">
+  Du doan thanh cong! He thong da xu ly va hien thi ket qua ben duoi.
+</div>
+{% endif %}
+
 <div class="decision-box decision-{% if result.decision.decision_class == 'success' %}approved{% elif result.decision.decision_class == 'warning' %}conditional{% else %}rejected{% endif %}">
   {% if result.decision.decision_class == "success" %}
     <span class="decision-title">DUYỆT</span>

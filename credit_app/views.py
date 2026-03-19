@@ -290,6 +290,7 @@ def predict(request):
         
         context = {
             'prediction_id': prediction.id,
+            'prediction_success': True,
             'requested_amount': int(loan_amnt),
 
             # Input data
@@ -349,8 +350,6 @@ def predict(request):
             'explanation': dss_result['explanation'],
             'alternative_result': ahp_result.get('alternative_result', {}),
         }
-
-        messages.success(request, 'Du doan thanh cong! He thong da xu ly va hien thi ket qua ben duoi.')
 
         return render(request, 'result.html', context)
 

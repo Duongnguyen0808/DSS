@@ -823,8 +823,7 @@ AHP{% endblock %} {% block extra_css %}
           <li>
             {{ forloop.counter }}. {{ criterion }}
             <span style="color: #10b981"
-              >({{ weights|index:forloop.counter0|multiply:100|floatformat:1
-              }}%)</span
+              >({{ weights|index:forloop.counter0|multiply:100|floatformat:1 }}%)</span
             >
           </li>
           {% endfor %}
@@ -984,8 +983,7 @@ AHP{% endblock %} {% block extra_css %}
             text-align: right;
           "
         >
-          {{ weights|index:forloop.counter0|floatformat:4 }}&nbsp;({{
-          weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+          {{ weights|index:forloop.counter0|floatformat:4 }}&nbsp;({{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
         </span>
       </div>
       <div
@@ -1115,9 +1113,7 @@ AHP{% endblock %} {% block extra_css %}
     <ol style="font-size: 16px; line-height: 2">
       {% for criterion in criteria %}
       <li>
-        <strong>{{ criterion }}</strong>: {{
-        weights|index:forloop.counter0|floatformat:4 }} ({{
-        weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
+        <strong>{{ criterion }}</strong>: {{ weights|index:forloop.counter0|floatformat:4 }} ({{ weights|index:forloop.counter0|multiply:100|floatformat:2 }}%)
       </li>
       {% endfor %}
     </ol>

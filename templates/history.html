@@ -202,23 +202,17 @@
   }
 
   .explanation-cell {
-    max-width: 300px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: help;
-    position: relative;
-  }
-
-  .explanation-cell:hover {
-    white-space: normal;
-    overflow: visible;
+    max-width: 400px;
+    min-width: 300px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.5;
   }
 
   .explanation-full {
-    font-size: 12px;
-    color: #666;
-    line-height: 1.4;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
   }
 </style>
 {% endblock %} {% block content %}
@@ -256,6 +250,7 @@
     <thead>
       <tr>
         <th>Thời Gian</th>
+        <th>Họ và Tên</th>
         <th>Thu Nhập</th>
         <th>Số Tiền Vay</th>
         <th>Xác Suất Vỡ Nợ</th>
@@ -270,6 +265,7 @@
       {% for pred in predictions %}
       <tr class="{% if pred.decision == 'Duyệt' %}table-success{% endif %}">
         <td>{{ pred.created_at|date:"d/m/Y H:i" }}</td>
+        <td style="font-weight: bold; color: #1e293b;">{{ pred.person_name }}</td>
         <td>{{ pred.person_income|format_number }}</td>
         <td>{{ pred.loan_amnt|format_number }}</td>
         <td>{{ pred.probability_default|floatformat:2 }}%</td>

@@ -9,6 +9,7 @@ class LoanPrediction(models.Model):
     """Model lưu trữ lịch sử dự đoán cho vay"""
     
     # Thông tin khách hàng
+    person_name = models.CharField(max_length=100, verbose_name="Họ và tên", default="Khách hàng", null=True, blank=True)
     person_age = models.IntegerField(verbose_name="Tuổi")
     person_income = models.IntegerField(verbose_name="Thu nhập")
     person_home_ownership = models.CharField(max_length=20, verbose_name="Nhà ở")

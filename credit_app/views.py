@@ -96,6 +96,7 @@ def predict(request):
         # 1. Lấy dữ liệu từ form
         print(f"DEBUG - POST data: {request.POST}")
         
+        person_name = request.POST.get('person_name', 'Khách hàng')
         person_age = int(request.POST.get('person_age'))
         
         # Thu nhập - lấy từ hidden field
@@ -253,6 +254,7 @@ def predict(request):
         # 6. Lưu vào database
         prediction = LoanPrediction.objects.create(
             # Thông tin khách hàng
+            person_name=person_name,
             person_age=person_age,
             person_income=person_income,
             person_home_ownership=person_home_ownership,
@@ -295,6 +297,7 @@ def predict(request):
 
             # Input data
             'input_data': {
+                'Họ và tên': person_name,
                 'Tuổi': person_age,
                 'Thu nhập': f"{person_income:,}đ",
                 'Số năm làm việc': person_emp_length,

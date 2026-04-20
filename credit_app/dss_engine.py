@@ -103,16 +103,19 @@ class DSSEngine:
             decision = "TỪ CHỐI"
             decision_class = "danger"
             risk_level = "Rủi ro cao"
-            recommended_amount = 0
-            # Khi đã từ chối thì không hiển thị hạn mức tối đa để tránh gây hiểu nhầm.
-            max_loan_amount = 0
+            # Vẫn đưa ra hạn mức gợi ý để người dùng biết mốc có thể cân nhắc vay lại.
+            provisional_safe_amount = round((income * 0.3) / 1000000) * 1000000
+            provisional_safe_amount = max(5000000, provisional_safe_amount)
+            recommended_amount = int(min(max_loan_amount, provisional_safe_amount))
+            recommended_amount_fmt = format_vnd(recommended_amount)
             explanation = (
                 f"❌ Đề xuất: Từ chối hồ sơ\n\n"
                 f"Kết quả phân tích từ hệ thống:\n"
                 f"• Xác suất rủi ro (AI dự đoán): {probability_percent}%\n"
                 f"• Mức độ rủi ro: CAO (Vượt quá ngưỡng an toàn cho phép).\n\n"
                 f"Hồ sơ khách hàng mang tính rủi ro nghiêm trọng, dẫn đến khả năng vỡ nợ cao nếu cấp tín dụng ở thời điểm hiện tại.\n"
-                f"Khuyến nghị từ chối khoản vay. Yêu cầu khách hàng thanh lý các khoản nợ xấu, cải thiện điểm lịch sử tín dụng trước khi nộp lại hồ sơ sau ít nhất 6 tháng."
+                f"Khuyến nghị tạm thời từ chối khoản vay theo số tiền đã yêu cầu.\n"
+                f"Hạn mức tham khảo để cân nhắc nộp lại hồ sơ là khoảng {recommended_amount_fmt} VNĐ, kèm điều kiện bổ sung hồ sơ và kiểm soát rủi ro tốt hơn."
             )
         
         return {

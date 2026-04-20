@@ -3,6 +3,8 @@ DSS Engine - Decision Support System
 Kết hợp AHP và AI để ra quyết định cho vay
 """
 
+import math
+
 class DSSEngine:
     """
     DSS Engine kết hợp AHP và Machine Learning
@@ -30,12 +32,26 @@ class DSSEngine:
         
         # Tính hạn mức vay tối đa dựa trên thu nhập và rủi ro
         max_loan_amount = self._calculate_max_loan(income, probability_default, ahp_score)
+
+        # Một số chỉ số giải thích để khách hàng hiểu vì sao được/không được vay.
+        loan_to_income_ratio = (loan_amount / income) if income > 0 else 0
+        loan_to_income_percent = loan_to_income_ratio * 100
+        current_profile_ratio = (max_loan_amount / income) if income > 0 else 0
+        required_income_current_profile = (
+            math.ceil(loan_amount / current_profile_ratio)
+            if current_profile_ratio > 0 else loan_amount
+        )
+        # Kịch bản tốt nhất theo policy hiện tại: risk_multiple=4.0 và ahp_factor=1.1 => 4.4x thu nhập.
+        best_case_ratio = 4.4
+        required_income_best_case = math.ceil(loan_amount / best_case_ratio)
         
         def format_vnd(amount):
             return f"{amount:,}"
             
         loan_amount_fmt = format_vnd(loan_amount)
         max_loan_amount_fmt = format_vnd(max_loan_amount)
+        required_income_current_profile_fmt = format_vnd(required_income_current_profile)
+        required_income_best_case_fmt = format_vnd(required_income_best_case)
         
         # Ra quyết định
         if probability_default < self.thresholds['approve']:
@@ -96,7 +112,8 @@ class DSSEngine:
                     f"• Xác suất rủi ro (AI): {probability_percent}%\n"
                     f"• Mức độ rủi ro: Trung bình.\n\n"
                     f"Số tiền yêu cầu ({loan_amount_fmt} VNĐ) là quá cao so với mức độ rủi ro hiện tại.\n"
-                    f"Chỉ đề xuất phê duyệt tối đa mức an toàn là {safe_amount_fmt} VNĐ, kèm theo điều kiện bắt buộc: Phải có tài sản đảm bảo và lên lịch kiểm tra dòng tiền định kỳ."
+                    f"Phương án 1 (nếu giữ nguyên hồ sơ hiện tại): chỉ nên vay tối đa {safe_amount_fmt} VNĐ.\n"
+                    f"Phương án 2 (muốn vay gần mức yêu cầu): cần giảm xác suất rủi ro xuống dưới 35%, nâng điểm hồ sơ (AHP) lên từ 60+ và chứng minh dòng tiền ổn định hơn."
                 )
                 
         else:
@@ -110,12 +127,16 @@ class DSSEngine:
             recommended_amount_fmt = format_vnd(recommended_amount)
             explanation = (
                 f"❌ Đề xuất: Từ chối hồ sơ\n\n"
-                f"Kết quả phân tích từ hệ thống:\n"
-                f"• Xác suất rủi ro (AI dự đoán): {probability_percent}%\n"
-                f"• Mức độ rủi ro: CAO (Vượt quá ngưỡng an toàn cho phép).\n\n"
-                f"Hồ sơ khách hàng mang tính rủi ro nghiêm trọng, dẫn đến khả năng vỡ nợ cao nếu cấp tín dụng ở thời điểm hiện tại.\n"
-                f"Khuyến nghị tạm thời từ chối khoản vay theo số tiền đã yêu cầu.\n"
-                f"Hạn mức tham khảo để cân nhắc nộp lại hồ sơ là khoảng {recommended_amount_fmt} VNĐ, kèm điều kiện bổ sung hồ sơ và kiểm soát rủi ro tốt hơn."
+                f"Vì sao chưa thể duyệt khoản {loan_amount_fmt} VNĐ:\n"
+                f"• Xác suất rủi ro AI: {probability_percent}% (cao hơn ngưỡng 35%).\n"
+                f"• Tỷ lệ khoản vay/thu nhập hiện tại: {loan_to_income_ratio:.2f} ({loan_to_income_percent:.1f}%).\n"
+                f"• Hồ sơ hiện tại chỉ phù hợp hạn mức tối đa khoảng {max_loan_amount_fmt} VNĐ.\n\n"
+                f"Để có thể vay gần mức {loan_amount_fmt} VNĐ, khách hàng cần cải thiện:\n"
+                f"1) Giảm rủi ro xuống dưới 35% (ưu tiên dưới 25%).\n"
+                f"2) Nâng chất lượng hồ sơ (AHP) lên ít nhất 60 điểm.\n"
+                f"3) Chứng minh thu nhập cao hơn: tối thiểu khoảng {required_income_current_profile_fmt} VNĐ/năm nếu các yếu tố rủi ro giữ như hiện tại; hoặc khoảng {required_income_best_case_fmt} VNĐ/năm trong kịch bản hồ sơ tốt.\n"
+                f"4) Bổ sung tài sản bảo đảm/đồng trả nợ để giảm áp lực rủi ro.\n\n"
+                f"Nếu chưa cải thiện ngay, hệ thống khuyến nghị chỉ nên vay mức an toàn khoảng {recommended_amount_fmt} VNĐ ở lần nộp lại gần nhất."
             )
         
         return {

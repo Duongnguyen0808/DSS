@@ -104,6 +104,8 @@ class DSSEngine:
             decision_class = "danger"
             risk_level = "Rủi ro cao"
             recommended_amount = 0
+            # Khi đã từ chối thì không hiển thị hạn mức tối đa để tránh gây hiểu nhầm.
+            max_loan_amount = 0
             explanation = (
                 f"❌ Đề xuất: Từ chối hồ sơ\n\n"
                 f"Kết quả phân tích từ hệ thống:\n"
@@ -127,43 +129,42 @@ class DSSEngine:
     def _calculate_max_loan(self, income, probability, ahp_score):
         """
         Tính hạn mức vay tối đa
-        
-        Công thức: Max_Loan = Income × DTI_Ratio × Risk_Adjustment
-        - DTI_Ratio: Debt-to-Income ratio tối đa (30-50%)
-        - Risk_Adjustment: Điều chỉnh theo rủi ro và AHP score
+
+        Chính sách mới dùng bội số thu nhập năm để trực quan hơn:
+        Max_Loan = Income_Annual × Risk_Multiple × AHP_Adjustment
+
+        - Risk_Multiple: theo mức rủi ro tổng quát
+        - AHP_Adjustment: tinh chỉnh theo chất lượng hồ sơ
         """
-        # DTI ratio cơ bản (40% thu nhập)
-        base_dti = 0.40
-        
-        # Điều chỉnh theo xác suất nợ xấu
+        # Bội số thu nhập năm theo xác suất rủi ro.
         if probability < 0.15:
-            risk_factor = 1.25  # Tăng 25% cho khách hàng rất tốt
+            risk_multiple = 4.0
         elif probability < 0.25:
-            risk_factor = 1.0
+            risk_multiple = 3.0
         elif probability < 0.35:
-            risk_factor = 0.75  # Giảm 25%
+            risk_multiple = 2.0
         else:
-            risk_factor = 0.5   # Giảm 50% cho rủi ro cao
-        
-        # Điều chỉnh theo AHP score
+            risk_multiple = 1.2
+
+        # Điều chỉnh nhẹ theo AHP score.
         if ahp_score >= 80:
-            ahp_factor = 1.2
+            ahp_factor = 1.1
         elif ahp_score >= 60:
             ahp_factor = 1.0
         elif ahp_score >= 40:
-            ahp_factor = 0.8
+            ahp_factor = 0.9
         else:
-            ahp_factor = 0.6
-        
-        # Tính hạn mức
-        max_loan = income * base_dti * risk_factor * ahp_factor
-        
+            ahp_factor = 0.8
+
+        # Tính hạn mức theo thu nhập năm.
+        max_loan = income * risk_multiple * ahp_factor
+
         # Làm tròn đến 1 triệu
         max_loan = round(max_loan / 1000000) * 1000000
-        
+
         # Giới hạn tối thiểu và tối đa
-        max_loan = max(5000000, min(max_loan, income * 5))  # Min 5M, Max 5x thu nhập
-        
+        max_loan = max(5000000, min(max_loan, income * 5))  # Min 5M, Max 5x thu nhập năm
+
         return int(max_loan)
 
 

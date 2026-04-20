@@ -23,29 +23,19 @@ class DSSEngine:
     def make_decision(self, ahp_score, probability_default, loan_amount, income):
         """
         Ra quyết định cho vay
-        
-        Parameters:
-            ahp_score (float): Điểm AHP (0-100)
-            probability_default (float): Xác suất nợ xấu (0-1)
-            loan_amount (int): Số tiền vay yêu cầu
-            income (int): Thu nhập
-        
-        Returns:
-            dict: {
-                'decision': str,
-                'decision_class': str,
-                'risk_level': str,
-                'final_score': float,
-                'recommended_amount': int,
-                'max_loan_amount': int,
-                'explanation': str
-            }
         """
         # Tính Final Score
         final_score = ahp_score * (1 - probability_default)
+        probability_percent = round(probability_default * 100, 2)
         
         # Tính hạn mức vay tối đa dựa trên thu nhập và rủi ro
         max_loan_amount = self._calculate_max_loan(income, probability_default, ahp_score)
+        
+        def format_vnd(amount):
+            return f"{amount:,}"
+            
+        loan_amount_fmt = format_vnd(loan_amount)
+        max_loan_amount_fmt = format_vnd(max_loan_amount)
         
         # Ra quyết định
         if probability_default < self.thresholds['approve']:
@@ -56,10 +46,26 @@ class DSSEngine:
             # Duyệt toàn bộ nếu trong hạn mức
             if loan_amount <= max_loan_amount:
                 recommended_amount = loan_amount
-                explanation = f"Khách hàng có hồ sơ tốt. Duyệt toàn bộ {loan_amount:,}đ yêu cầu."
+                explanation = (
+                    f"✅ Đề xuất: Phê duyệt toàn bộ khoản vay\n\n"
+                    f"Dựa trên phân tích chuyên sâu của hệ thống:\n"
+                    f"• Điểm tín nhiệm (AHP): {ahp_score:.2f}/100\n"
+                    f"• Xác suất rủi ro (AI): {probability_percent}%\n"
+                    f"• Mức độ rủi ro: Thấp.\n\n"
+                    f"Hồ sơ của khách hàng rất tốt. Hệ thống tính toán hạn mức tối đa an toàn có thể cấp là {max_loan_amount_fmt} VNĐ.\n"
+                    f"Khoản vay yêu cầu ({loan_amount_fmt} VNĐ) nằm trong giới hạn an toàn. Có thể tiến hành giải ngân ngay."
+                )
             else:
                 recommended_amount = max_loan_amount
-                explanation = f"Khách hàng tốt nhưng số tiền vay vượt hạn mức an toàn. Đề xuất duyệt {max_loan_amount:,}đ."
+                explanation = (
+                    f"⚠️ Đề xuất: Phê duyệt một phần khoản vay\n\n"
+                    f"Dựa trên phân tích chuyên sâu của hệ thống:\n"
+                    f"• Điểm tín nhiệm (AHP): {ahp_score:.2f}/100\n"
+                    f"• Xác suất rủi ro (AI): {probability_percent}%\n"
+                    f"• Mức độ rủi ro: Thấp.\n\n"
+                    f"Mặc dù hồ sơ tốt, nhưng số tiền khách hàng yêu cầu vay ({loan_amount_fmt} VNĐ) vượt mức an toàn dựa trên năng lực tài chính hiện tại.\n"
+                    f"Để đảm bảo an toàn tín dụng, đề xuất giảm mức giải ngân xuống tối đa {max_loan_amount_fmt} VNĐ."
+                )
                 
         elif probability_default < self.thresholds['conditional']:
             decision = "DUYỆT CÓ ĐIỀU KIỆN"
@@ -68,20 +74,44 @@ class DSSEngine:
             
             # Giảm 30% hạn mức cho trường hợp có điều kiện
             safe_amount = int(max_loan_amount * 0.7)
+            safe_amount_fmt = format_vnd(safe_amount)
             
             if loan_amount <= safe_amount:
                 recommended_amount = loan_amount
-                explanation = f"Duyệt {loan_amount:,}đ với điều kiện: Thế chấp tài sản hoặc người bảo lãnh."
+                explanation = (
+                    f"⚠️ Đề xuất: Phê duyệt kèm điều kiện bổ sung\n\n"
+                    f"Dựa trên phân tích chuyên sâu của hệ thống:\n"
+                    f"• Điểm tín nhiệm (AHP): {ahp_score:.2f}/100\n"
+                    f"• Xác suất rủi ro (AI): {probability_percent}%\n"
+                    f"• Mức độ rủi ro: Trung bình.\n\n"
+                    f"Hồ sơ có một số điểm lưu ý, tiềm ẩn mức độ rủi ro nhất định. Khoản vay yêu cầu là {loan_amount_fmt} VNĐ.\n"
+                    f"Có thể duyệt cấp tín dụng với số tiền này nhưng BẮT BUỘC phải yêu cầu thế chấp tài sản có giá trị tương đương hoặc có người bảo lãnh uy tín."
+                )
             else:
                 recommended_amount = safe_amount
-                explanation = f"Đề xuất duyệt {safe_amount:,}đ (giảm từ {loan_amount:,}đ) với điều kiện: Thế chấp tài sản và kiểm tra định kỳ."
+                explanation = (
+                    f"⚠️ Đề xuất: Cắt giảm hạn mức & Yêu cầu điều kiện\n\n"
+                    f"Dựa trên phân tích chuyên sâu của hệ thống:\n"
+                    f"• Điểm tín nhiệm (AHP): {ahp_score:.2f}/100\n"
+                    f"• Xác suất rủi ro (AI): {probability_percent}%\n"
+                    f"• Mức độ rủi ro: Trung bình.\n\n"
+                    f"Số tiền yêu cầu ({loan_amount_fmt} VNĐ) là quá cao so với mức độ rủi ro hiện tại.\n"
+                    f"Chỉ đề xuất phê duyệt tối đa mức an toàn là {safe_amount_fmt} VNĐ, kèm theo điều kiện bắt buộc: Phải có tài sản đảm bảo và lên lịch kiểm tra dòng tiền định kỳ."
+                )
                 
         else:
             decision = "TỪ CHỐI"
             decision_class = "danger"
             risk_level = "Rủi ro cao"
             recommended_amount = 0
-            explanation = f"Xác suất vỡ nợ cao ({probability_default*100:.1f}%). Không đủ điều kiện cho vay tại thời điểm này. Đề xuất: Cải thiện hồ sơ tín dụng và tái nộp sau 6 tháng."
+            explanation = (
+                f"❌ Đề xuất: Từ chối hồ sơ\n\n"
+                f"Kết quả phân tích từ hệ thống:\n"
+                f"• Xác suất rủi ro (AI dự đoán): {probability_percent}%\n"
+                f"• Mức độ rủi ro: CAO (Vượt quá ngưỡng an toàn cho phép).\n\n"
+                f"Hồ sơ khách hàng mang tính rủi ro nghiêm trọng, dẫn đến khả năng vỡ nợ cao nếu cấp tín dụng ở thời điểm hiện tại.\n"
+                f"Khuyến nghị từ chối khoản vay. Yêu cầu khách hàng thanh lý các khoản nợ xấu, cải thiện điểm lịch sử tín dụng trước khi nộp lại hồ sơ sau ít nhất 6 tháng."
+            )
         
         return {
             'decision': decision,
